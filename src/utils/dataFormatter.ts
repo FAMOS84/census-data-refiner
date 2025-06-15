@@ -1,11 +1,129 @@
+
 import { CensusData, MasterCensusRecord } from '@/types/census';
 
 export const formatCensusData = async (data: CensusData): Promise<CensusData> => {
   const formattedMasterCensus = data.masterCensus.map(record => formatMasterCensusRecord(record));
   
+  // Group records by employee to consolidate voluntary life amounts
+  const consolidatedRecords = consolidateVoluntaryLifeAmounts(formattedMasterCensus);
+  
   return {
-    masterCensus: formattedMasterCensus
+    masterCensus: consolidatedRecords
   };
+};
+
+const consolidateVoluntaryLifeAmounts = (records: MasterCensusRecord[]): MasterCensusRecord[] => {
+  const employeeGroups = new Map<string, MasterCensusRecord[]>();
+  
+  // Group records by employee (using SSN as key for employees)
+  records.forEach(record => {
+    if (record.relationship === 'Employee') {
+      const key = record.socialSecurityNumber || `${record.memberLastName}_${record.firstName}`;
+      if (!employeeGroups.has(key)) {
+        employeeGroups.set(key, []);
+      }
+      employeeGroups.get(key)!.push(record);
+    }
+  });
+  
+  // Find dependents and match them to employees
+  records.forEach(record => {
+    if (record.relationship !== 'Employee') {
+      // Try to match dependent to employee by last name (simplified matching)
+      for (const [key, employeeRecords] of employeeGroups.entries()) {
+        const employee = employeeRecords[0];
+        if (employee.memberLastName === record.memberLastName) {
+          employeeRecords.push(record);
+          break;
+        }
+      }
+    }
+  });
+  
+  const consolidatedRecords: MasterCensusRecord[] = [];
+  
+  // Process each employee group
+  for (const [key, groupRecords] of employeeGroups.entries()) {
+    const employee = groupRecords.find(r => r.relationship === 'Employee');
+    if (!employee) continue;
+    
+    const dependents = groupRecords.filter(r => r.relationship !== 'Employee');
+    
+    // Consolidate voluntary life amounts from dependents to employee
+    let consolidatedSpouseVolume = employee.spouseVolumeAmount || 0;
+    let consolidatedDependentVolume = employee.dependentVolume || '0';
+    
+    dependents.forEach(dependent => {
+      if (dependent.relationship === 'Spouse' || dependent.relationship === 'Domestic Partner') {
+        if (dependent.spouseVolumeAmount) {
+          consolidatedSpouseVolume = Math.max(consolidatedSpouseVolume, dependent.spouseVolumeAmount);
+        }
+      } else if (dependent.relationship === 'Child') {
+        if (dependent.dependentVolume && dependent.dependentVolume !== '0' && dependent.dependentVolume !== 'W') {
+          consolidatedDependentVolume = dependent.dependentVolume;
+        }
+      }
+    });
+    
+    // Update employee record with consolidated amounts
+    const updatedEmployee = {
+      ...employee,
+      spouseVolumeAmount: consolidatedSpouseVolume,
+      dependentVolume: consolidatedDependentVolume
+    };
+    
+    consolidatedRecords.push(updatedEmployee);
+    
+    // Add dependents with only basic info (Name, DOB, Disabled, Address)
+    dependents.forEach(dependent => {
+      const cleanedDependent = {
+        ...dependent,
+        // Clear out benefit elections for dependents
+        dentalPlanElection: undefined,
+        dentalCoverageType: undefined,
+        dhmoProviderName: undefined,
+        dentalPriorCarrierName: undefined,
+        dentalPriorCarrierEffectiveDate: undefined,
+        dentalPriorCarrierTermDate: undefined,
+        dentalPriorCarrierOrtho: undefined,
+        visionPlanElection: undefined,
+        visionCoverageType: undefined,
+        basicLifeCoverageType: undefined,
+        primaryLifeBeneficiary: undefined,
+        dependentBasicLife: undefined,
+        lifeADDClass: undefined,
+        employeeVolumeAmount: undefined,
+        spouseVolumeAmount: undefined,
+        dependentVolume: undefined,
+        std: undefined,
+        ltd: undefined,
+        stdClass: undefined,
+        ltdClass: undefined,
+        salaryType: undefined,
+        salaryAmount: undefined,
+        occupation: undefined,
+        hoursWorked: undefined,
+        workingLocation: undefined,
+        billingDivision: undefined,
+        dateOfHire: undefined
+      };
+      consolidatedRecords.push(cleanedDependent);
+    });
+  }
+  
+  // Add any remaining records that weren't grouped
+  records.forEach(record => {
+    const isAlreadyProcessed = consolidatedRecords.some(cr => 
+      cr.socialSecurityNumber === record.socialSecurityNumber ||
+      (cr.memberLastName === record.memberLastName && cr.firstName === record.firstName && cr.dateOfBirth === record.dateOfBirth)
+    );
+    
+    if (!isAlreadyProcessed) {
+      consolidatedRecords.push(record);
+    }
+  });
+  
+  return consolidatedRecords;
 };
 
 const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
@@ -57,7 +175,7 @@ const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     ltdClass: record.relationship === 'Employee' ? record.ltdClass : undefined,
     
     salaryType: record.relationship === 'Employee' ? record.salaryType : undefined,
-    salaryAmount: record.relationship === 'Employee' ? parseFloat(record.salaryAmount) || undefined : undefined,
+    salaryAmount: record.relationship === 'Employee' ? formatSalary(record.salaryAmount, record.salaryType, record.hoursWorked) : undefined,
     occupation: record.relationship === 'Employee' ? cleanText(record.occupation) : undefined,
     hoursWorked: record.relationship === 'Employee' ? parseInt(record.hoursWorked) || 40 : undefined,
     workingLocation: record.relationship === 'Employee' ? cleanText(record.workingLocation) : undefined,
@@ -92,14 +210,34 @@ const formatDate = (date: any): string => {
   
   // Handle Excel serial date numbers
   if (typeof date === 'number') {
-    const excelEpoch = new Date(1900, 0, 1);
-    const d = new Date(excelEpoch.getTime() + (date - 1) * 24 * 60 * 60 * 1000);
+    // Excel epoch starts from January 1, 1900, but Excel incorrectly treats 1900 as a leap year
+    // Excel serial date 1 = January 1, 1900 (but we need to account for the leap year bug)
+    const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+    const d = new Date(excelEpoch.getTime() + date * 24 * 60 * 60 * 1000);
     return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
   }
   
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
   return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
+};
+
+const formatSalary = (salary: any, salaryType: any, hoursWorked: any): number | undefined => {
+  if (!salary) return undefined;
+  
+  // Remove any currency symbols and commas, then parse
+  const cleanSalary = salary.toString().replace(/[$,]/g, '');
+  const salaryNumber = parseFloat(cleanSalary);
+  
+  if (isNaN(salaryNumber)) return undefined;
+  
+  // If it's hourly, annualize it
+  if (salaryType && salaryType.toString().toLowerCase() === 'hourly') {
+    const hours = parseInt(hoursWorked) || 40; // Default to 40 hours if not specified
+    return salaryNumber * hours * 52; // hourly rate * hours per week * 52 weeks
+  }
+  
+  return salaryNumber;
 };
 
 const formatSSN = (ssn: any): string => {
