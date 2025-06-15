@@ -17,7 +17,7 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
   const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
-    if (data && data.records && data.records.length > 0) {
+    if (data && data.masterCensus && data.masterCensus.length > 0) {
       performValidation();
     } else {
       setValidationResults(null);
@@ -25,7 +25,7 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
   }, [data]);
 
   const performValidation = async () => {
-    if (!data || !data.records || data.records.length === 0) return;
+    if (!data || !data.masterCensus || data.masterCensus.length === 0) return;
     
     setIsValidating(true);
     try {
@@ -40,7 +40,7 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
     }
   };
 
-  if (!data || !data.records || data.records.length === 0) {
+  if (!data || !data.masterCensus || data.masterCensus.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">No data to validate</p>

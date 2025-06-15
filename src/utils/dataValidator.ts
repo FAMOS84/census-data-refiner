@@ -5,7 +5,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
   
-  if (!data || !data.records || data.records.length === 0) {
+  if (!data || !data.masterCensus || data.masterCensus.length === 0) {
     errors.push({
       field: 'Data',
       message: 'No records found in the uploaded file',
@@ -18,6 +18,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
       warnings,
       summary: {
         totalRecords: 0,
+        validRecords: 0,
         errorCount: errors.length,
         warningCount: warnings.length,
         demographicCounts: {
@@ -25,6 +26,11 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
           spouses: 0,
           children: 0,
           domesticPartners: 0
+        },
+        coverageEnrollment: {
+          dental: 0,
+          vision: 0,
+          life: 0
         }
       }
     };
@@ -37,10 +43,16 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
     domesticPartners: 0
   };
 
+  const coverageEnrollment = {
+    dental: 0,
+    vision: 0,
+    life: 0
+  };
+
   // Basic validation for each record
-  data.records.forEach((record, index) => {
+  data.masterCensus.forEach((record, index) => {
     // Count demographics
-    const relationship = record.Relationship?.toLowerCase() || '';
+    const relationship = record.relationship?.toLowerCase() || '';
     if (relationship === 'employee') {
       demographicCounts.employees++;
     } else if (relationship === 'spouse') {
@@ -51,8 +63,19 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
       demographicCounts.domesticPartners++;
     }
 
+    // Count coverage enrollment
+    if (record.dentalPlanElection && record.dentalPlanElection.toLowerCase() !== 'waive') {
+      coverageEnrollment.dental++;
+    }
+    if (record.visionPlanElection && record.visionPlanElection.toLowerCase() !== 'waive') {
+      coverageEnrollment.vision++;
+    }
+    if (record.basicLifeCoverageType && record.basicLifeCoverageType.toLowerCase() !== 'waive') {
+      coverageEnrollment.life++;
+    }
+
     // Required field validation
-    if (!record['Member Last Name']) {
+    if (!record.memberLastName) {
       errors.push({
         field: 'Member Last Name',
         message: 'Last name is required',
@@ -60,7 +83,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
       });
     }
 
-    if (!record['First Name']) {
+    if (!record.firstName) {
       errors.push({
         field: 'First Name',
         message: 'First name is required',
@@ -68,7 +91,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
       });
     }
 
-    if (!record['Date of Birth']) {
+    if (!record.dateOfBirth) {
       errors.push({
         field: 'Date of Birth',
         message: 'Date of birth is required',
@@ -76,7 +99,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
       });
     } else {
       // Validate date format
-      const dobString = record['Date of Birth'];
+      const dobString = record.dateOfBirth;
       const dobPattern = /^\d{2}\/\d{2}\/\d{4}$/;
       if (!dobPattern.test(dobString)) {
         warnings.push({
@@ -89,7 +112,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
 
     // SSN validation for employees
     if (relationship === 'employee') {
-      const ssn = record['Social Security Number'];
+      const ssn = record.socialSecurityNumber;
       if (!ssn) {
         errors.push({
           field: 'Social Security Number',
@@ -106,7 +129,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
     }
 
     // Gender validation
-    const gender = record.Gender?.toUpperCase();
+    const gender = record.gender?.toUpperCase();
     if (gender && !['M', 'F'].includes(gender)) {
       errors.push({
         field: 'Gender',
@@ -116,15 +139,19 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
     }
   });
 
+  const validRecords = data.masterCensus.length - errors.length;
+
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
     summary: {
-      totalRecords: data.records.length,
+      totalRecords: data.masterCensus.length,
+      validRecords,
       errorCount: errors.length,
       warningCount: warnings.length,
-      demographicCounts
+      demographicCounts,
+      coverageEnrollment
     }
   };
 };
