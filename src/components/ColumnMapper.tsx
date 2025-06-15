@@ -21,6 +21,7 @@ const REQUIRED_FIELDS = [
   { key: 'dateOfBirth', label: 'Date of Birth', required: true },
   { key: 'socialSecurityNumber', label: 'Social Security Number', required: false },
   { key: 'employeeStatus', label: 'Employee Status', required: false },
+  { key: 'disabled', label: 'Disabled', required: false },
   { key: 'memberStreetAddress', label: 'Member Street Address', required: false },
   { key: 'city', label: 'City', required: false },
   { key: 'state', label: 'State', required: false },
