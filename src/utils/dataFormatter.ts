@@ -1,4 +1,3 @@
-
 import { CensusData, MasterCensusRecord } from '@/types/census';
 
 export const formatCensusData = async (data: CensusData): Promise<CensusData> => {
@@ -105,7 +104,9 @@ const formatDate = (date: any): string => {
 
 const formatSSN = (ssn: any): string => {
   if (!ssn) return '';
-  return ssn.toString().replace(/\D/g, '');
+  const cleanSSN = ssn.toString().replace(/\D/g, '');
+  // Pad with leading zeros if less than 9 digits
+  return cleanSSN.padStart(9, '0');
 };
 
 const formatAddress = (address: any): string => {
