@@ -1,3 +1,4 @@
+
 import { CensusData, MasterCensusRecord } from '@/types/census';
 
 export const formatCensusData = async (data: CensusData): Promise<CensusData> => {
@@ -27,7 +28,7 @@ const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     state: formatState(record.state),
     zip: formatZip(record.zip),
     phone: formatPhone(record.phone),
-    email: record.email,
+    email: record.email || '',
     dateOfHire: record.relationship === 'Employee' ? formatDate(record.dateOfHire) : undefined,
     
     // Benefits Information (Employee lines only)
@@ -66,7 +67,8 @@ const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
 };
 
 // Utility functions for formatting
-const cleanText = (text: string): string => {
+const cleanText = (text: any): string => {
+  if (!text) return '';
   return text
     .toString()
     .toUpperCase()
@@ -76,29 +78,37 @@ const cleanText = (text: string): string => {
     .trim();
 };
 
-const formatName = (name: string): string => {
+const formatName = (name: any): string => {
   if (!name) return '';
   return cleanText(name);
 };
 
-const formatMiddleInitial = (initial: string): string => {
+const formatMiddleInitial = (initial: any): string => {
   if (!initial) return '';
   return initial.toString().charAt(0).toUpperCase();
 };
 
 const formatDate = (date: any): string => {
   if (!date) return '';
+  
+  // Handle Excel serial date numbers
+  if (typeof date === 'number') {
+    const excelEpoch = new Date(1900, 0, 1);
+    const d = new Date(excelEpoch.getTime() + (date - 1) * 24 * 60 * 60 * 1000);
+    return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
+  }
+  
   const d = new Date(date);
   if (isNaN(d.getTime())) return '';
   return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`;
 };
 
-const formatSSN = (ssn: string): string => {
+const formatSSN = (ssn: any): string => {
   if (!ssn) return '';
   return ssn.toString().replace(/\D/g, '');
 };
 
-const formatAddress = (address: string): string => {
+const formatAddress = (address: any): string => {
   if (!address) return '';
   return address
     .toString()
@@ -112,35 +122,37 @@ const formatAddress = (address: string): string => {
     .trim();
 };
 
-const formatCity = (city: string): string => {
+const formatCity = (city: any): string => {
   if (!city) return '';
   return city.toString().toUpperCase().replace(/[^\w\s]/g, '').trim();
 };
 
-const formatState = (state: string): string => {
+const formatState = (state: any): string => {
   if (!state) return '';
   return state.toString().toUpperCase().substring(0, 2);
 };
 
-const formatZip = (zip: string): string => {
+const formatZip = (zip: any): string => {
   if (!zip) return '';
   return zip.toString().replace(/\D/g, '').substring(0, 5);
 };
 
-const formatPhone = (phone: string): string => {
+const formatPhone = (phone: any): string => {
   if (!phone) return '';
   return phone.toString().replace(/\D/g, '').substring(0, 10);
 };
 
-const validateRelationship = (relationship: string): 'Employee' | 'Spouse' | 'Domestic Partner' | 'Child' => {
-  const rel = relationship?.toString().toLowerCase();
-  if (rel?.includes('spouse')) return 'Spouse';
-  if (rel?.includes('domestic') || rel?.includes('partner')) return 'Domestic Partner';
-  if (rel?.includes('child') || rel?.includes('dependent')) return 'Child';
+const validateRelationship = (relationship: any): 'Employee' | 'Spouse' | 'Domestic Partner' | 'Child' => {
+  if (!relationship) return 'Employee';
+  const rel = relationship.toString().toLowerCase();
+  if (rel.includes('spouse')) return 'Spouse';
+  if (rel.includes('domestic') || rel.includes('partner')) return 'Domestic Partner';
+  if (rel.includes('child') || rel.includes('dependent')) return 'Child';
   return 'Employee';
 };
 
-const validateGender = (gender: string): 'M' | 'F' => {
-  const g = gender?.toString().toLowerCase();
-  return g?.startsWith('f') ? 'F' : 'M';
+const validateGender = (gender: any): 'M' | 'F' => {
+  if (!gender) return 'M';
+  const g = gender.toString().toLowerCase();
+  return g.startsWith('f') ? 'F' : 'M';
 };
