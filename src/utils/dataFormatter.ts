@@ -1,28 +1,10 @@
-
 import { CensusData, MasterCensusRecord } from '@/types/census';
 
 export const formatCensusData = async (data: CensusData): Promise<CensusData> => {
   const formattedMasterCensus = data.masterCensus.map(record => formatMasterCensusRecord(record));
   
   return {
-    grpInfo: formatGrpInfo(data.grpInfo),
     masterCensus: formattedMasterCensus
-  };
-};
-
-const formatGrpInfo = (grpInfo: any) => {
-  return {
-    groupName: cleanText(grpInfo.groupName || ''),
-    quoteId: grpInfo.quoteId || '',
-    agentHan: grpInfo.agentHan || '',
-    agentName: cleanText(grpInfo.agentName || ''),
-    totalEligible: parseInt(grpInfo.totalEligible) || 0,
-    effectiveDate: formatDate(grpInfo.effectiveDate),
-    humanaSalesRep: cleanText(grpInfo.humanaSalesRep || ''),
-    incumbentCarrierName: cleanText(grpInfo.incumbentCarrierName || ''),
-    descriptionOfDentalPlans: cleanText(grpInfo.descriptionOfDentalPlans || ''),
-    currentRenewalRates: grpInfo.currentRenewalRates,
-    enrollmentByTier: grpInfo.enrollmentByTier
   };
 };
 
