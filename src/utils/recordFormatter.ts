@@ -84,8 +84,9 @@ const formatDependentVolume = (volume: any): '5000' | '10000' | '0' | 'Enroll' |
   // Log for debugging
   console.log('Formatting dependent volume:', volume, 'cleaned:', volumeStr);
   
-  // Handle waiver variations
-  if (volumeStr === 'WAIVE' || volumeStr === 'WAIVED' || volumeStr === 'W') {
+  // Handle waiver variations - including "Waive with Other Coverage"
+  if (volumeStr === 'WAIVE' || volumeStr === 'WAIVED' || volumeStr === 'W' || 
+      volumeStr === 'WAIVE WITH OTHER COVERAGE' || volumeStr.includes('WAIVE WITH OTHER')) {
     return 'W';
   }
   
@@ -114,4 +115,75 @@ const formatDependentVolume = (volume: any): '5000' | '10000' | '0' | 'Enroll' |
   // If we can't determine, log the issue and default to waiver
   console.warn('Unknown dependent volume value:', volume, 'defaulting to W');
   return 'W';
+};
+
+// New function to roll up dependent voluntary life amounts to employee lines
+export const rollUpDependentVoluntaryLife = (records: MasterCensusRecord[]): MasterCensusRecord[] => {
+  console.log('Starting dependent voluntary life rollup...');
+  
+  const processedRecords = [...records];
+  
+  for (let i = 0; i < processedRecords.length; i++) {
+    const record = processedRecords[i];
+    
+    // Only process employee records
+    if (record.relationship !== 'Employee') continue;
+    
+    // Look for dependents immediately following this employee
+    for (let j = i + 1; j < processedRecords.length; j++) {
+      const dependentRecord = processedRecords[j];
+      
+      // Stop when we hit another employee
+      if (dependentRecord.relationship === 'Employee') break;
+      
+      // Process spouse voluntary life
+      if (dependentRecord.relationship === 'Spouse' || dependentRecord.relationship === 'Domestic Partner') {
+        const spouseVolume = getDependentVolumeAmount(dependentRecord);
+        if (spouseVolume > 0) {
+          record.spouseVolumeAmount = (record.spouseVolumeAmount || 0) + spouseVolume;
+          console.log(`Rolled up ${spouseVolume} from ${dependentRecord.relationship} to Employee spouse volume`);
+        }
+      }
+      
+      // Process child voluntary life
+      if (dependentRecord.relationship === 'Child') {
+        const childVolume = getDependentVolumeAmount(dependentRecord);
+        if (childVolume > 0) {
+          // For children, we set the dependentVolume field
+          if (childVolume === 5000) {
+            record.dependentVolume = '5000';
+          } else if (childVolume === 10000) {
+            record.dependentVolume = '10000';
+          }
+          console.log(`Rolled up ${childVolume} from Child to Employee dependent volume`);
+        }
+      }
+    }
+  }
+  
+  console.log('Dependent voluntary life rollup completed');
+  return processedRecords;
+};
+
+// Helper function to extract volume amount from dependent records
+const getDependentVolumeAmount = (record: any): number => {
+  // Check various fields where volume might be stored
+  const volumeFields = [
+    record.employeeVolumeAmount,
+    record.spouseVolumeAmount, 
+    record.dependentVolume,
+    record.voluntaryLife,
+    record.volume
+  ];
+  
+  for (const field of volumeFields) {
+    if (field) {
+      const numericValue = parseFloat(field.toString().replace(/[$,]/g, ''));
+      if (!isNaN(numericValue) && numericValue > 0) {
+        return numericValue;
+      }
+    }
+  }
+  
+  return 0;
 };

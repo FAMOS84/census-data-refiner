@@ -120,8 +120,9 @@ export const formatCoverageType = (coverage: any): 'EE' | 'ES' | 'EC' | 'EF' | '
   
   const coverageStr = coverage.toString().toUpperCase().trim();
   
-  // Handle waiver variations
-  if (coverageStr === 'WAIVE' || coverageStr === 'WAIVED' || coverageStr === 'W') {
+  // Handle waiver variations - including "Waive with Other Coverage"
+  if (coverageStr === 'WAIVE' || coverageStr === 'WAIVED' || coverageStr === 'W' || 
+      coverageStr === 'WAIVE WITH OTHER COVERAGE' || coverageStr.includes('WAIVE WITH OTHER')) {
     return 'W';
   }
   
@@ -141,8 +142,9 @@ export const formatRestrictedCoverageType = (coverage: any): 'EE' | 'W' | undefi
   
   const coverageStr = coverage.toString().toUpperCase().trim();
   
-  // Handle waiver variations
-  if (coverageStr === 'WAIVE' || coverageStr === 'WAIVED' || coverageStr === 'W') {
+  // Handle waiver variations - including "Waive with Other Coverage"
+  if (coverageStr === 'WAIVE' || coverageStr === 'WAIVED' || coverageStr === 'W' || 
+      coverageStr === 'WAIVE WITH OTHER COVERAGE' || coverageStr.includes('WAIVE WITH OTHER')) {
     return 'W';
   }
   
