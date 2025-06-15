@@ -139,15 +139,17 @@ export const rollUpDependentVoluntaryLife = (records: MasterCensusRecord[]): Mas
       // Process spouse voluntary life
       if (dependentRecord.relationship === 'Spouse' || dependentRecord.relationship === 'Domestic Partner') {
         const spouseVolume = getDependentVolumeAmount(dependentRecord);
+        console.log(`Found spouse volume for ${dependentRecord.firstName} ${dependentRecord.memberLastName}:`, spouseVolume);
         if (spouseVolume > 0) {
           record.spouseVolumeAmount = (record.spouseVolumeAmount || 0) + spouseVolume;
-          console.log(`Rolled up ${spouseVolume} from ${dependentRecord.relationship} to Employee spouse volume`);
+          console.log(`Rolled up ${spouseVolume} from ${dependentRecord.relationship} to Employee spouse volume. New total: ${record.spouseVolumeAmount}`);
         }
       }
       
       // Process child voluntary life
       if (dependentRecord.relationship === 'Child') {
         const childVolume = getDependentVolumeAmount(dependentRecord);
+        console.log(`Found child volume for ${dependentRecord.firstName} ${dependentRecord.memberLastName}:`, childVolume);
         if (childVolume > 0) {
           // For children, we set the dependentVolume field
           if (childVolume === 5000) {
@@ -167,23 +169,53 @@ export const rollUpDependentVoluntaryLife = (records: MasterCensusRecord[]): Mas
 
 // Helper function to extract volume amount from dependent records
 const getDependentVolumeAmount = (record: any): number => {
-  // Check various fields where volume might be stored
+  console.log('Checking volume fields for record:', record.firstName, record.memberLastName);
+  console.log('Raw record data:', record);
+  
+  // Check various fields where volume might be stored - expanded list
   const volumeFields = [
     record.employeeVolumeAmount,
     record.spouseVolumeAmount, 
     record.dependentVolume,
     record.voluntaryLife,
-    record.volume
+    record.volume,
+    record.volLife,
+    record.voluntaryLifeAmount,
+    record.lifeAmount,
+    record.amount,
+    record.coverage,
+    record.benefit,
+    record.benefitAmount
   ];
+  
+  // Also check all fields that might contain numbers
+  Object.keys(record).forEach(key => {
+    const value = record[key];
+    if (value && typeof value !== 'object') {
+      const stringValue = value.toString().trim();
+      // If the field contains a number that looks like a life insurance amount
+      if (/^\$?[\d,]+\.?\d*$/.test(stringValue)) {
+        const numericValue = parseFloat(stringValue.replace(/[$,]/g, ''));
+        if (numericValue >= 1000 && numericValue <= 1000000) { // Reasonable life insurance range
+          console.log(`Found potential volume in field "${key}":`, numericValue);
+          volumeFields.push(value);
+        }
+      }
+    }
+  });
   
   for (const field of volumeFields) {
     if (field) {
-      const numericValue = parseFloat(field.toString().replace(/[$,]/g, ''));
+      const stringValue = field.toString().replace(/[$,\s]/g, '');
+      const numericValue = parseFloat(stringValue);
+      console.log(`Checking field value: ${field} -> parsed: ${numericValue}`);
       if (!isNaN(numericValue) && numericValue > 0) {
+        console.log(`Found valid volume amount: ${numericValue}`);
         return numericValue;
       }
     }
   }
   
+  console.log('No volume amount found for this record');
   return 0;
 };
