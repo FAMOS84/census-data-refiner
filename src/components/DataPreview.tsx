@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -27,7 +26,6 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
     if (data) {
       // Show preview of first 10 records
       const preview = {
-        grpInfo: data.grpInfo,
         masterCensus: data.masterCensus.slice(0, 10)
       };
       setPreviewData(preview);
@@ -60,24 +58,13 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Records</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.masterCensus.length}</div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Group Name</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-semibold truncate">
-              {data.grpInfo.groupName || 'Not specified'}
-            </div>
           </CardContent>
         </Card>
         

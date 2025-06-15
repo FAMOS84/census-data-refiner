@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileSpreadsheet } from 'lucide-react';
@@ -17,27 +16,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'buffer' });
       
-      // Extract GRP INFO sheet
-      const grpInfoSheet = workbook.Sheets['GRP INFO'] || workbook.Sheets[workbook.SheetNames[0]];
-      const grpInfoData = XLSX.utils.sheet_to_json(grpInfoSheet, { header: 1 });
-      
-      // Extract MASTER CENSUS sheet
-      const masterCensusSheet = workbook.Sheets['MASTER CENSUS'] || workbook.Sheets[workbook.SheetNames[1]];
+      // Extract MASTER CENSUS sheet (first sheet or specifically named)
+      const masterCensusSheet = workbook.Sheets['MASTER CENSUS'] || workbook.Sheets[workbook.SheetNames[0]];
       const masterCensusData = XLSX.utils.sheet_to_json(masterCensusSheet, { header: 1 });
       
       // Process the data into our format
       const processedData: CensusData = {
-        grpInfo: {
-          groupName: '',
-          quoteId: '',
-          agentHan: '',
-          agentName: '',
-          totalEligible: 0,
-          effectiveDate: '',
-          humanaSalesRep: '',
-          incumbentCarrierName: '',
-          descriptionOfDentalPlans: ''
-        },
         masterCensus: []
       };
       

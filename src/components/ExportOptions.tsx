@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,22 +25,6 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
     try {
       // Create a new workbook
       const workbook = XLSX.utils.book_new();
-
-      // Create GRP INFO sheet
-      const grpInfoData = [
-        ['Group Name', formattedData.grpInfo.groupName],
-        ['Quote ID #', formattedData.grpInfo.quoteId],
-        ['Agent HAN#', formattedData.grpInfo.agentHan],
-        ['Agent Name', formattedData.grpInfo.agentName],
-        ['Total Eligible', formattedData.grpInfo.totalEligible],
-        ['Effective Date', formattedData.grpInfo.effectiveDate],
-        ['Humana Sales Rep', formattedData.grpInfo.humanaSalesRep],
-        ['Incumbent Carrier Name', formattedData.grpInfo.incumbentCarrierName],
-        ['Description of Dental Plans', formattedData.grpInfo.descriptionOfDentalPlans],
-      ];
-      
-      const grpInfoSheet = XLSX.utils.aoa_to_sheet(grpInfoData);
-      XLSX.utils.book_append_sheet(workbook, grpInfoSheet, 'GRP INFO');
 
       // Create MASTER CENSUS sheet
       if (formattedData.masterCensus && formattedData.masterCensus.length > 0) {
@@ -211,7 +194,6 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
           <div className="text-sm text-muted-foreground">
             <p>The exported file will contain:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>GRP INFO sheet with group information</li>
               <li>MASTER CENSUS sheet with formatted employee data</li>
               <li>All data formatted according to requirements document</li>
             </ul>

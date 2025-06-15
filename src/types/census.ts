@@ -1,29 +1,6 @@
 
 export interface CensusData {
-  grpInfo: GrpInfo;
   masterCensus: MasterCensusRecord[];
-}
-
-export interface GrpInfo {
-  groupName: string;
-  quoteId: string;
-  agentHan: string;
-  agentName: string;
-  totalEligible: number;
-  effectiveDate: string;
-  humanaSalesRep: string;
-  incumbentCarrierName: string;
-  descriptionOfDentalPlans: string;
-  currentRenewalRates?: string;
-  enrollmentByTier?: EnrollmentByTier;
-}
-
-export interface EnrollmentByTier {
-  EE: number;
-  ES: number;
-  EC: number;
-  EF: number;
-  W: number;
 }
 
 export interface MasterCensusRecord {
@@ -112,9 +89,8 @@ export interface ValidationSummary {
     domesticPartners: number;
   };
   coverageEnrollment: {
-    dental: EnrollmentByTier;
-    vision: EnrollmentByTier;
-    basicLife: { enrolled: number; waived: number };
-    voluntaryLife: { enrolled: number; waived: number };
+    dental: number;
+    vision: number;
+    life: number;
   };
 }
