@@ -17,13 +17,15 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
   const [isValidating, setIsValidating] = useState(false);
 
   useEffect(() => {
-    if (data) {
+    if (data && data.records && data.records.length > 0) {
       performValidation();
+    } else {
+      setValidationResults(null);
     }
   }, [data]);
 
   const performValidation = async () => {
-    if (!data) return;
+    if (!data || !data.records || data.records.length === 0) return;
     
     setIsValidating(true);
     try {
@@ -32,12 +34,13 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
       onValidationComplete(results);
     } catch (error) {
       console.error('Validation error:', error);
+      setValidationResults(null);
     } finally {
       setIsValidating(false);
     }
   };
 
-  if (!data) {
+  if (!data || !data.records || data.records.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">No data to validate</p>
@@ -126,7 +129,7 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>{error.field}:</strong> {error.message}
-                  {error.rowIndex && ` (Row ${error.rowIndex + 1})`}
+                  {error.rowIndex !== undefined && ` (Row ${error.rowIndex + 1})`}
                 </AlertDescription>
               </Alert>
             ))}
@@ -149,7 +152,7 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>{warning.field}:</strong> {warning.message}
-                  {warning.rowIndex && ` (Row ${warning.rowIndex + 1})`}
+                  {warning.rowIndex !== undefined && ` (Row ${warning.rowIndex + 1})`}
                 </AlertDescription>
               </Alert>
             ))}
