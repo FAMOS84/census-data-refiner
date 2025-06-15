@@ -36,6 +36,7 @@ const REQUIRED_FIELDS = [
   { key: 'occupation', label: 'Occupation', required: false },
   { key: 'workingLocation', label: 'Working Location', required: false },
   { key: 'billingDivision', label: 'Billing Division', required: false },
+  { key: 'dentalPlanElection', label: 'Dental Plan Election', required: false },
   { key: 'dentalCoverageType', label: 'Dental Coverage Type', required: false },
   { key: 'dhmoProviderName', label: 'DHMO Provider Name', required: false },
   { key: 'dentalPriorCarrierName', label: 'Prior Carrier Name', required: false },
