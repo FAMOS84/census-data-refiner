@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +17,10 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
 
   useEffect(() => {
     if (data && data.masterCensus && data.masterCensus.length > 0) {
+      console.log('ValidationResults: Starting validation with formatted data:', data.masterCensus[0]);
       performValidation();
     } else {
+      console.log('ValidationResults: No data available for validation');
       setValidationResults(null);
     }
   }, [data]);
@@ -29,7 +30,9 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
     
     setIsValidating(true);
     try {
+      console.log('ValidationResults: Running validation on', data.masterCensus.length, 'records');
       const results = await validateCensusData(data);
+      console.log('ValidationResults: Validation completed with results:', results);
       setValidationResults(results);
       onValidationComplete(results);
     } catch (error) {
@@ -43,7 +46,8 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
   if (!data || !data.masterCensus || data.masterCensus.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No data to validate</p>
+        <p className="text-muted-foreground">No formatted data available for validation</p>
+        <p className="text-sm text-muted-foreground mt-2">Please complete the column mapping in the Preview tab first</p>
       </div>
     );
   }
@@ -51,7 +55,7 @@ const ValidationResults: React.FC<ValidationResultsProps> = ({ data, onValidatio
   if (isValidating) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">Validating data...</p>
+        <p className="text-muted-foreground">Validating formatted data...</p>
       </div>
     );
   }

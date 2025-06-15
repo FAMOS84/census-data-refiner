@@ -10,8 +10,21 @@ import { CensusData } from '@/types/census';
 
 const CensusFormatter = () => {
   const [uploadedData, setUploadedData] = useState<CensusData | null>(null);
+  const [formattedData, setFormattedData] = useState<CensusData | null>(null);
   const [validationResults, setValidationResults] = useState<any>(null);
-  const [formattedData, setFormattedData] = useState<any>(null);
+
+  const handleDataUploaded = (data: CensusData) => {
+    setUploadedData(data);
+    // Reset formatted data and validation when new data is uploaded
+    setFormattedData(null);
+    setValidationResults(null);
+  };
+
+  const handleFormattedData = (data: CensusData) => {
+    setFormattedData(data);
+    // Reset validation when new formatted data is available
+    setValidationResults(null);
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -19,8 +32,8 @@ const CensusFormatter = () => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upload">Upload</TabsTrigger>
           <TabsTrigger value="preview" disabled={!uploadedData}>Preview</TabsTrigger>
-          <TabsTrigger value="validate" disabled={!uploadedData}>Validate</TabsTrigger>
-          <TabsTrigger value="export" disabled={!formattedData}>Export</TabsTrigger>
+          <TabsTrigger value="validate" disabled={!formattedData}>Validate</TabsTrigger>
+          <TabsTrigger value="export" disabled={!formattedData || !validationResults}>Export</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="mt-6">
@@ -29,7 +42,7 @@ const CensusFormatter = () => {
               <CardTitle>Upload Census File</CardTitle>
             </CardHeader>
             <CardContent>
-              <FileUpload onDataUploaded={setUploadedData} />
+              <FileUpload onDataUploaded={handleDataUploaded} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -42,7 +55,7 @@ const CensusFormatter = () => {
             <CardContent>
               <DataPreview 
                 data={uploadedData} 
-                onFormattedData={setFormattedData}
+                onFormattedData={handleFormattedData}
               />
             </CardContent>
           </Card>
@@ -55,7 +68,7 @@ const CensusFormatter = () => {
             </CardHeader>
             <CardContent>
               <ValidationResults 
-                data={uploadedData} 
+                data={formattedData} 
                 onValidationComplete={setValidationResults}
               />
             </CardContent>
