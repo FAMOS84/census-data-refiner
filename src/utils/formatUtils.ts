@@ -134,3 +134,26 @@ export const formatCoverageType = (coverage: any): 'EE' | 'ES' | 'EC' | 'EF' | '
   // Return the original value if we can't determine the mapping
   return coverageStr as any;
 };
+
+// New function for coverages that only allow EE or W (Basic Life, STD, LTD)
+export const formatRestrictedCoverageType = (coverage: any): 'EE' | 'W' | undefined => {
+  if (!coverage) return undefined;
+  
+  const coverageStr = coverage.toString().toUpperCase().trim();
+  
+  // Handle waiver variations
+  if (coverageStr === 'WAIVE' || coverageStr === 'WAIVED' || coverageStr === 'W') {
+    return 'W';
+  }
+  
+  // For restricted coverages, anything that's not a waiver becomes EE
+  if (coverageStr === 'EE' || coverageStr === 'EMPLOYEE ONLY' || 
+      coverageStr === 'ES' || coverageStr === 'EMPLOYEE SPOUSE' ||
+      coverageStr === 'EC' || coverageStr === 'EMPLOYEE CHILD' || coverageStr === 'EMPLOYEE CHILDREN' ||
+      coverageStr === 'EF' || coverageStr === 'EMPLOYEE FAMILY') {
+    return 'EE';
+  }
+  
+  // Return EE for any other non-waiver value
+  return 'EE';
+};

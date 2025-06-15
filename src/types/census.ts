@@ -1,3 +1,4 @@
+
 export interface CensusData {
   masterCensus: MasterCensusRecord[];
 }
@@ -25,7 +26,7 @@ export interface MasterCensusRecord {
   
   // Benefits Information (Employee lines only)
   dentalPlanElection?: string;
-  dentalCoverageType?: 'EE' | 'ES' | 'EC' | 'EF' | 'W';
+  dentalCoverageType?: 'EE' | 'ES' | 'EC' | 'EF' | 'W'; // Dental allows all tiers
   dhmoProviderName?: string;
   dentalPriorCarrierName?: string;
   dentalPriorCarrierEffectiveDate?: string;
@@ -33,9 +34,9 @@ export interface MasterCensusRecord {
   dentalPriorCarrierOrtho?: 'Yes' | 'No';
   
   visionPlanElection?: string;
-  visionCoverageType?: 'EE' | 'ES' | 'EC' | 'EF' | 'W';
+  visionCoverageType?: 'EE' | 'ES' | 'EC' | 'EF' | 'W'; // Vision allows all tiers
   
-  basicLifeCoverageType?: 'EE' | 'W';
+  basicLifeCoverageType?: 'EE' | 'W'; // Basic Life only allows EE or W
   primaryLifeBeneficiary?: string;
   dependentBasicLife?: 'Enroll' | 'W';
   lifeADDClass?: string;
@@ -44,8 +45,8 @@ export interface MasterCensusRecord {
   spouseVolumeAmount?: number;
   dependentVolume?: '5000' | '10000' | '0' | 'Enroll' | 'W';
   
-  std?: 'EE' | 'W';
-  ltd?: 'EE' | 'W';
+  std?: 'EE' | 'W'; // STD only allows EE or W
+  ltd?: 'EE' | 'W'; // LTD only allows EE or W
   stdClass?: string;
   ltdClass?: string;
   
