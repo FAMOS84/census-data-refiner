@@ -81,22 +81,28 @@ const formatDependentVolume = (volume: any): '5000' | '10000' | '0' | 'Enroll' |
   
   const volumeStr = volume.toString().toUpperCase().trim();
   
+  // Log for debugging
+  console.log('Formatting dependent volume:', volume, 'cleaned:', volumeStr);
+  
   // Handle waiver variations
   if (volumeStr === 'WAIVE' || volumeStr === 'WAIVED' || volumeStr === 'W') {
     return 'W';
   }
   
-  // Handle enrollment
+  // Handle enrollment - this should prompt user for clarification
   if (volumeStr === 'ENROLL' || volumeStr === 'ENROLLED') {
+    console.warn('VALIDATION NEEDED: Dependent Child Voluntary Life shows "Enroll" but no specific amount (5000 or 10000) specified. Please verify the intended coverage amount.');
     return 'Enroll';
   }
   
-  // Handle specific amounts
-  if (volumeStr === '5000' || volumeStr === '5,000' || volumeStr === '$5000' || volumeStr === '$5,000') {
+  // Handle specific amounts - be more flexible with number parsing
+  const numericValue = volumeStr.replace(/[$,\s]/g, '');
+  
+  if (numericValue === '5000' || volumeStr.includes('5000')) {
     return '5000';
   }
   
-  if (volumeStr === '10000' || volumeStr === '10,000' || volumeStr === '$10000' || volumeStr === '$10,000') {
+  if (numericValue === '10000' || volumeStr.includes('10000')) {
     return '10000';
   }
   
@@ -105,6 +111,7 @@ const formatDependentVolume = (volume: any): '5000' | '10000' | '0' | 'Enroll' |
     return '0';
   }
   
-  // Default to waiver if we can't determine
+  // If we can't determine, log the issue and default to waiver
+  console.warn('Unknown dependent volume value:', volume, 'defaulting to W');
   return 'W';
 };
