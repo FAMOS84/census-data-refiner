@@ -1,3 +1,4 @@
+
 import { MasterCensusRecord } from '@/types/census';
 import { 
   formatName, 
@@ -10,6 +11,7 @@ import {
   formatState, 
   formatZip, 
   formatPhone,
+  formatCoverageType,
   cleanText 
 } from './formatUtils';
 import { validateRelationship, validateGender } from './fieldValidators';
@@ -35,34 +37,34 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     state: formatState(record.state),
     zip: formatZip(record.zip),
     phone: formatPhone(record.phone),
-    email: record.email || '',
+    email: record.email || '', // Email keeps special characters as requested
     dateOfHire: record.relationship === 'Employee' ? formatDate(record.dateOfHire) : undefined,
     
-    // Benefits Information (Employee lines only)
+    // Benefits Information (Employee lines only) - with coverage formatting
     dentalPlanElection: record.relationship === 'Employee' ? record.dentalPlanElection : undefined,
-    dentalCoverageType: record.relationship === 'Employee' ? record.dentalCoverageType : undefined,
-    dhmoProviderName: record.relationship === 'Employee' ? record.dhmoProviderName : undefined,
-    dentalPriorCarrierName: record.relationship === 'Employee' ? record.dentalPriorCarrierName : undefined,
+    dentalCoverageType: record.relationship === 'Employee' ? formatCoverageType(record.dentalCoverageType) : undefined,
+    dhmoProviderName: record.relationship === 'Employee' ? cleanText(record.dhmoProviderName) : undefined,
+    dentalPriorCarrierName: record.relationship === 'Employee' ? cleanText(record.dentalPriorCarrierName) : undefined,
     dentalPriorCarrierEffectiveDate: record.relationship === 'Employee' ? formatDate(record.dentalPriorCarrierEffectiveDate) : undefined,
     dentalPriorCarrierTermDate: record.relationship === 'Employee' ? formatDate(record.dentalPriorCarrierTermDate) : undefined,
     dentalPriorCarrierOrtho: record.relationship === 'Employee' ? (record.dentalPriorCarrierOrtho === 'Yes' ? 'Yes' : 'No') : undefined,
     
-    visionPlanElection: record.relationship === 'Employee' ? record.visionPlanElection : undefined,
-    visionCoverageType: record.relationship === 'Employee' ? record.visionCoverageType : undefined,
+    visionPlanElection: record.relationship === 'Employee' ? cleanText(record.visionPlanElection) : undefined,
+    visionCoverageType: record.relationship === 'Employee' ? formatCoverageType(record.visionCoverageType) : undefined,
     
-    basicLifeCoverageType: record.relationship === 'Employee' ? record.basicLifeCoverageType : undefined,
-    primaryLifeBeneficiary: record.relationship === 'Employee' ? record.primaryLifeBeneficiary : undefined,
-    dependentBasicLife: record.relationship === 'Employee' ? record.dependentBasicLife : undefined,
-    lifeADDClass: record.relationship === 'Employee' ? record.lifeADDClass : undefined,
+    basicLifeCoverageType: record.relationship === 'Employee' ? formatCoverageType(record.basicLifeCoverageType) : undefined,
+    primaryLifeBeneficiary: record.relationship === 'Employee' ? cleanText(record.primaryLifeBeneficiary) : undefined,
+    dependentBasicLife: record.relationship === 'Employee' ? (record.dependentBasicLife === 'Enroll' ? 'Enroll' : 'W') : undefined,
+    lifeADDClass: record.relationship === 'Employee' ? cleanText(record.lifeADDClass) : undefined,
     
     employeeVolumeAmount: record.relationship === 'Employee' ? parseFloat(record.employeeVolumeAmount) || 0 : undefined,
     spouseVolumeAmount: record.relationship === 'Employee' ? parseFloat(record.spouseVolumeAmount) || 0 : undefined,
-    dependentVolume: record.relationship === 'Employee' ? record.dependentVolume : undefined,
+    dependentVolume: record.relationship === 'Employee' ? (record.dependentVolume === 'Enroll' || record.dependentVolume === '5000' || record.dependentVolume === '10000' ? record.dependentVolume : 'W') : undefined,
     
-    std: record.relationship === 'Employee' ? record.std : undefined,
-    ltd: record.relationship === 'Employee' ? record.ltd : undefined,
-    stdClass: record.relationship === 'Employee' ? record.stdClass : undefined,
-    ltdClass: record.relationship === 'Employee' ? record.ltdClass : undefined,
+    std: record.relationship === 'Employee' ? formatCoverageType(record.std) : undefined,
+    ltd: record.relationship === 'Employee' ? formatCoverageType(record.ltd) : undefined,
+    stdClass: record.relationship === 'Employee' ? cleanText(record.stdClass) : undefined,
+    ltdClass: record.relationship === 'Employee' ? cleanText(record.ltdClass) : undefined,
     
     salaryType: record.relationship === 'Employee' ? record.salaryType : undefined,
     salaryAmount: record.relationship === 'Employee' ? formatSalary(record.salaryAmount, record.salaryType, record.hoursWorked) : undefined,

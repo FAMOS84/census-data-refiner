@@ -67,23 +67,42 @@ export const formatAddress = (address: any): string => {
   return address
     .toString()
     .toUpperCase()
+    .replace(/[^\w\s]/g, ' ') // Remove all punctuation and special characters
     .replace(/#/g, ' UNIT ')
-    .replace(/\bRD\b/g, 'ROAD')
-    .replace(/\bST\b/g, 'STREET')
-    .replace(/\bBLVD\b/g, 'BOULEVARD')
-    .replace(/\bAVE\b/g, 'AVENUE')
+    .replace(/\bROAD\b/g, 'RD')
+    .replace(/\bSTREET\b/g, 'ST')
+    .replace(/\bBOULEVARD\b/g, 'BLVD')
+    .replace(/\bAVENUE\b/g, 'AVE')
+    .replace(/\bDRIVE\b/g, 'DR')
+    .replace(/\bLANE\b/g, 'LN')
+    .replace(/\bCOURT\b/g, 'CT')
+    .replace(/\bCIRCLE\b/g, 'CIR')
+    .replace(/\bPLACE\b/g, 'PL')
+    .replace(/\bTERRACE\b/g, 'TER')
+    .replace(/\bPARKWAY\b/g, 'PKWY')
+    .replace(/\bHIGHWAY\b/g, 'HWY')
+    .replace(/\bNORTH\b/g, 'N')
+    .replace(/\bSOUTH\b/g, 'S')
+    .replace(/\bEAST\b/g, 'E')
+    .replace(/\bWEST\b/g, 'W')
+    .replace(/\bNORTHEAST\b/g, 'NE')
+    .replace(/\bNORTHWEST\b/g, 'NW')
+    .replace(/\bSOUTHEAST\b/g, 'SE')
+    .replace(/\bSOUTHWEST\b/g, 'SW')
+    .replace(/\bAPARTMENT\b/g, 'APT')
+    .replace(/\bSUITE\b/g, 'STE')
     .replace(/\s+/g, ' ')
     .trim();
 };
 
 export const formatCity = (city: any): string => {
   if (!city) return '';
-  return city.toString().toUpperCase().replace(/[^\w\s]/g, '').trim();
+  return city.toString().toUpperCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 };
 
 export const formatState = (state: any): string => {
   if (!state) return '';
-  return state.toString().toUpperCase().substring(0, 2);
+  return state.toString().toUpperCase().replace(/[^\w]/g, '').substring(0, 2);
 };
 
 export const formatZip = (zip: any): string => {
@@ -94,4 +113,24 @@ export const formatZip = (zip: any): string => {
 export const formatPhone = (phone: any): string => {
   if (!phone) return '';
   return phone.toString().replace(/\D/g, '').substring(0, 10);
+};
+
+export const formatCoverageType = (coverage: any): 'EE' | 'ES' | 'EC' | 'EF' | 'W' | undefined => {
+  if (!coverage) return undefined;
+  
+  const coverageStr = coverage.toString().toUpperCase().trim();
+  
+  // Handle waiver variations
+  if (coverageStr === 'WAIVE' || coverageStr === 'WAIVED' || coverageStr === 'W') {
+    return 'W';
+  }
+  
+  // Handle standard coverage types
+  if (coverageStr === 'EE' || coverageStr === 'EMPLOYEE ONLY') return 'EE';
+  if (coverageStr === 'ES' || coverageStr === 'EMPLOYEE SPOUSE') return 'ES';
+  if (coverageStr === 'EC' || coverageStr === 'EMPLOYEE CHILD' || coverageStr === 'EMPLOYEE CHILDREN') return 'EC';
+  if (coverageStr === 'EF' || coverageStr === 'EMPLOYEE FAMILY') return 'EF';
+  
+  // Return the original value if we can't determine the mapping
+  return coverageStr as any;
 };
