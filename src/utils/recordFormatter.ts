@@ -1,4 +1,3 @@
-
 import { MasterCensusRecord } from '@/types/census';
 import { 
   formatName, 
@@ -16,10 +15,12 @@ import {
 import { validateRelationship, validateGender } from './fieldValidators';
 
 export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
+  const relationship = validateRelationship(record.relationship);
+  
   return {
     // Employee Information
-    relationship: validateRelationship(record.relationship),
-    employeeStatus: record.employeeStatus || 'Active',
+    relationship: relationship,
+    employeeStatus: relationship === 'Employee' ? (record.employeeStatus || 'Active') : '',
     socialSecurityNumber: formatSSN(record.socialSecurityNumber),
     memberLastName: formatName(record.memberLastName || record.lastName),
     firstName: formatName(record.firstName),

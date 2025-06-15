@@ -1,4 +1,3 @@
-
 export interface CensusData {
   masterCensus: MasterCensusRecord[];
 }
@@ -6,7 +5,7 @@ export interface CensusData {
 export interface MasterCensusRecord {
   // Employee Information
   relationship: 'Employee' | 'Spouse' | 'Domestic Partner' | 'Child';
-  employeeStatus: 'Active' | 'COBRA' | 'Retiree';
+  employeeStatus: 'Active' | 'COBRA' | 'Retiree' | '';
   socialSecurityNumber?: string;
   memberLastName: string;
   firstName: string;
