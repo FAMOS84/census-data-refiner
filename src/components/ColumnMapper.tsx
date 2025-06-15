@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
 interface ColumnMapperProps {
   rawHeaders: string[];
@@ -104,6 +104,11 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
     return Object.values(mapping).filter(Boolean);
   };
 
+  const getUnmappedHeaders = () => {
+    const usedHeaders = getUsedHeaders();
+    return rawHeaders.filter(header => !usedHeaders.includes(header));
+  };
+
   const getAvailableHeaders = (currentField?: string) => {
     const usedHeaders = getUsedHeaders();
     const currentValue = currentField ? mapping[currentField] : '';
@@ -150,7 +155,7 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Total Columns</p>
               <p className="text-lg font-semibold">{rawHeaders.length}</p>
@@ -160,12 +165,43 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
               <p className="text-lg font-semibold">{getMappedCount()}</p>
             </div>
             <div>
+              <p className="text-muted-foreground">Unmapped</p>
+              <p className="text-lg font-semibold">{getUnmappedHeaders().length}</p>
+            </div>
+            <div>
               <p className="text-muted-foreground">Auto-mapped</p>
               <p className="text-lg font-semibold">{Object.keys(autoMapped).length}</p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Unmapped Columns */}
+      {getUnmappedHeaders().length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              Unmapped Columns ({getUnmappedHeaders().length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {getUnmappedHeaders().map((header, index) => (
+                <div key={header} className="p-3 border rounded-lg bg-muted/50">
+                  <div className="font-medium text-sm">{String.fromCharCode(65 + rawHeaders.indexOf(header))}. {header}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Sample: {getSampleValue(header)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              These columns from your file haven't been mapped to any fields yet. You can map them to optional fields below if needed.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Required Fields */}
       <Card>
@@ -191,9 +227,9 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
-                    {getAvailableHeaders(field.key).map((header, index) => (
+                    {getAvailableHeaders(field.key).map((header) => (
                       <SelectItem key={header} value={header}>
-                        {`${String.fromCharCode(65 + index)}. ${header}`}
+                        {`${String.fromCharCode(65 + rawHeaders.indexOf(header))}. ${header}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -233,9 +269,9 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
-                    {getAvailableHeaders(field.key).map((header, index) => (
+                    {getAvailableHeaders(field.key).map((header) => (
                       <SelectItem key={header} value={header}>
-                        {`${String.fromCharCode(65 + index)}. ${header}`}
+                        {`${String.fromCharCode(65 + rawHeaders.indexOf(header))}. ${header}`}
                       </SelectItem>
                     ))}
                   </SelectContent>
