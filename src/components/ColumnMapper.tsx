@@ -43,6 +43,8 @@ const REQUIRED_FIELDS = [
   { key: 'lifeADDClass', label: 'Basic Life Class', required: false },
 ];
 
+const NO_MAPPING_VALUE = '__NO_MAPPING__';
+
 const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onMappingComplete }) => {
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [autoMapped, setAutoMapped] = useState<Record<string, string>>({});
@@ -90,7 +92,7 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
   const handleMappingChange = (fieldKey: string, headerName: string) => {
     setMapping(prev => ({
       ...prev,
-      [fieldKey]: headerName
+      [fieldKey]: headerName === NO_MAPPING_VALUE ? '' : headerName
     }));
   };
 
@@ -181,14 +183,14 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
               </div>
               <div>
                 <Select 
-                  value={mapping[field.key] || ''} 
+                  value={mapping[field.key] || NO_MAPPING_VALUE} 
                   onValueChange={(value) => handleMappingChange(field.key, value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select column..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">-- No mapping --</SelectItem>
+                    <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
                     {getAvailableHeaders(field.key).map((header, index) => (
                       <SelectItem key={header} value={header}>
                         {`${String.fromCharCode(65 + index)}. ${header}`}
@@ -223,14 +225,14 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
               </div>
               <div>
                 <Select 
-                  value={mapping[field.key] || ''} 
+                  value={mapping[field.key] || NO_MAPPING_VALUE} 
                   onValueChange={(value) => handleMappingChange(field.key, value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select column..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">-- No mapping --</SelectItem>
+                    <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
                     {getAvailableHeaders(field.key).map((header, index) => (
                       <SelectItem key={header} value={header}>
                         {`${String.fromCharCode(65 + index)}. ${header}`}
