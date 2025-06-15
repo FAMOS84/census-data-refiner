@@ -1,0 +1,266 @@
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+
+interface ColumnMapperProps {
+  rawHeaders: string[];
+  sampleData: any[];
+  onMappingComplete: (mapping: Record<string, string>) => void;
+}
+
+const REQUIRED_FIELDS = [
+  { key: 'relationship', label: 'Relationship', required: true },
+  { key: 'memberLastName', label: 'Member Last Name', required: true },
+  { key: 'firstName', label: 'First Name', required: true },
+  { key: 'gender', label: 'Gender', required: true },
+  { key: 'dateOfBirth', label: 'Date of Birth', required: true },
+  { key: 'socialSecurityNumber', label: 'Social Security Number', required: false },
+  { key: 'employeeStatus', label: 'Employee Status', required: false },
+  { key: 'memberStreetAddress', label: 'Member Street Address', required: false },
+  { key: 'city', label: 'City', required: false },
+  { key: 'state', label: 'State', required: false },
+  { key: 'zip', label: 'Zip Code', required: false },
+  { key: 'phone', label: 'Phone Number', required: false },
+  { key: 'email', label: 'Email Address', required: false },
+  { key: 'dateOfHire', label: 'Date of Hire', required: false },
+  { key: 'salaryAmount', label: 'Salary', required: false },
+  { key: 'salaryType', label: 'Annual or Hourly', required: false },
+  { key: 'hoursWorked', label: 'Hours Worked Per Week', required: false },
+  { key: 'dentalCoverageType', label: 'Dental Coverage Type', required: false },
+  { key: 'visionPlanElection', label: 'Vision Plan Selection', required: false },
+  { key: 'visionCoverageType', label: 'Vision Coverage Type', required: false },
+  { key: 'basicLifeCoverageType', label: 'Basic Life Election', required: false },
+  { key: 'primaryLifeBeneficiary', label: 'Primary Life Beneficiary', required: false },
+  { key: 'employeeVolumeAmount', label: 'Employee Voluntary Life', required: false },
+  { key: 'spouseVolumeAmount', label: 'Spousal Voluntary Life', required: false },
+  { key: 'dependentVolume', label: 'Child Voluntary Life', required: false },
+  { key: 'occupation', label: 'Occupation', required: false },
+  { key: 'lifeADDClass', label: 'Basic Life Class', required: false },
+];
+
+const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onMappingComplete }) => {
+  const [mapping, setMapping] = useState<Record<string, string>>({});
+  const [autoMapped, setAutoMapped] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // Auto-map columns based on header names
+    const autoMapping: Record<string, string> = {};
+    
+    REQUIRED_FIELDS.forEach(field => {
+      const matchingHeader = rawHeaders.find(header => {
+        const headerLower = header.toLowerCase().trim();
+        const fieldLower = field.label.toLowerCase();
+        
+        // Exact matches
+        if (headerLower === fieldLower) return true;
+        
+        // Partial matches for common variations
+        if (field.key === 'memberLastName' && (headerLower.includes('last name') || headerLower.includes('member last'))) return true;
+        if (field.key === 'firstName' && headerLower.includes('first name')) return true;
+        if (field.key === 'socialSecurityNumber' && (headerLower.includes('ssn') || headerLower.includes('social security'))) return true;
+        if (field.key === 'dateOfBirth' && (headerLower.includes('date of birth') || headerLower.includes('dob'))) return true;
+        if (field.key === 'memberStreetAddress' && (headerLower.includes('address') || headerLower.includes('street'))) return true;
+        if (field.key === 'zip' && (headerLower.includes('zip') || headerLower.includes('postal'))) return true;
+        if (field.key === 'phone' && (headerLower.includes('phone') || headerLower.includes('telephone'))) return true;
+        if (field.key === 'email' && headerLower.includes('email')) return true;
+        if (field.key === 'dateOfHire' && headerLower.includes('hire')) return true;
+        if (field.key === 'salaryAmount' && headerLower.includes('salary')) return true;
+        if (field.key === 'salaryType' && (headerLower.includes('annual') || headerLower.includes('hourly'))) return true;
+        if (field.key === 'hoursWorked' && headerLower.includes('hours')) return true;
+        if (field.key === 'employeeStatus' && headerLower.includes('employee status')) return true;
+        if (field.key === 'disabled' && headerLower.includes('disabled')) return true;
+        
+        return false;
+      });
+      
+      if (matchingHeader) {
+        autoMapping[field.key] = matchingHeader;
+      }
+    });
+    
+    setAutoMapped(autoMapping);
+    setMapping(autoMapping);
+  }, [rawHeaders]);
+
+  const handleMappingChange = (fieldKey: string, headerName: string) => {
+    setMapping(prev => ({
+      ...prev,
+      [fieldKey]: headerName
+    }));
+  };
+
+  const handleApplyMapping = () => {
+    onMappingComplete(mapping);
+  };
+
+  const getUsedHeaders = () => {
+    return Object.values(mapping).filter(Boolean);
+  };
+
+  const getAvailableHeaders = (currentField?: string) => {
+    const usedHeaders = getUsedHeaders();
+    const currentValue = currentField ? mapping[currentField] : '';
+    return rawHeaders.filter(header => 
+      !usedHeaders.includes(header) || header === currentValue
+    );
+  };
+
+  const getMappedCount = () => {
+    return Object.values(mapping).filter(Boolean).length;
+  };
+
+  const getRequiredMappedCount = () => {
+    return REQUIRED_FIELDS.filter(field => field.required && mapping[field.key]).length;
+  };
+
+  const getRequiredFieldsCount = () => {
+    return REQUIRED_FIELDS.filter(field => field.required).length;
+  };
+
+  const getSampleValue = (headerName: string) => {
+    if (!headerName || !sampleData.length) return '';
+    return sampleData[0][headerName] || '';
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Column Mapping
+            {getRequiredMappedCount() === getRequiredFieldsCount() ? (
+              <Badge variant="outline" className="text-green-600">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Ready
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-orange-600">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {getRequiredFieldsCount() - getRequiredMappedCount()} required fields missing
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Total Columns</p>
+              <p className="text-lg font-semibold">{rawHeaders.length}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Mapped</p>
+              <p className="text-lg font-semibold">{getMappedCount()}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Auto-mapped</p>
+              <p className="text-lg font-semibold">{Object.keys(autoMapped).length}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Required Fields */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Required Field Mapping</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {REQUIRED_FIELDS.filter(field => field.required).map(field => (
+            <div key={field.key} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-3 border rounded-lg">
+              <div>
+                <Label className="font-medium">{field.label}</Label>
+                {mapping[field.key] && autoMapped[field.key] && (
+                  <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
+                )}
+              </div>
+              <div>
+                <Select 
+                  value={mapping[field.key] || ''} 
+                  onValueChange={(value) => handleMappingChange(field.key, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select column..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">-- No mapping --</SelectItem>
+                    {getAvailableHeaders(field.key).map((header, index) => (
+                      <SelectItem key={header} value={header}>
+                        {`${String.fromCharCode(65 + index)}. ${header}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {mapping[field.key] && (
+                  <span>Sample: {getSampleValue(mapping[field.key])}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Optional Fields */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Optional Field Mapping</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {REQUIRED_FIELDS.filter(field => !field.required).map(field => (
+            <div key={field.key} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-3 border rounded-lg">
+              <div>
+                <Label className="font-medium">{field.label}</Label>
+                {mapping[field.key] && autoMapped[field.key] && (
+                  <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
+                )}
+              </div>
+              <div>
+                <Select 
+                  value={mapping[field.key] || ''} 
+                  onValueChange={(value) => handleMappingChange(field.key, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select column..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">-- No mapping --</SelectItem>
+                    {getAvailableHeaders(field.key).map((header, index) => (
+                      <SelectItem key={header} value={header}>
+                        {`${String.fromCharCode(65 + index)}. ${header}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {mapping[field.key] && (
+                  <span>Sample: {getSampleValue(mapping[field.key])}</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Apply Button */}
+      <div className="flex justify-center">
+        <Button 
+          onClick={handleApplyMapping}
+          disabled={getRequiredMappedCount() < getRequiredFieldsCount()}
+          size="lg"
+        >
+          Apply Column Mapping & Format Data
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default ColumnMapper;

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -12,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CensusData } from '@/types/census';
 import { formatCensusData } from '@/utils/dataFormatter';
+import ColumnMapper from './ColumnMapper';
 
 interface DataPreviewProps {
   data: CensusData | null;
@@ -21,30 +23,66 @@ interface DataPreviewProps {
 const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
   const [previewData, setPreviewData] = useState<any>(null);
   const [isFormatting, setIsFormatting] = useState(false);
+  const [showColumnMapper, setShowColumnMapper] = useState(false);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
+  const [rawHeaders, setRawHeaders] = useState<string[]>([]);
 
   useEffect(() => {
-    if (data) {
+    if (data && data.masterCensus.length > 0) {
+      // Extract headers from the first record
+      const headers = Object.keys(data.masterCensus[0]);
+      setRawHeaders(headers);
+      
       // Show preview of first 10 records
       const preview = {
         masterCensus: data.masterCensus.slice(0, 10)
       };
       setPreviewData(preview);
+      
+      // Show column mapper by default
+      setShowColumnMapper(true);
     }
   }, [data]);
 
-  const handleFormatData = async () => {
+  const handleColumnMappingComplete = async (mapping: Record<string, string>) => {
     if (!data) return;
     
+    setColumnMapping(mapping);
     setIsFormatting(true);
+    setShowColumnMapper(false);
+    
     try {
-      const formatted = await formatCensusData(data);
+      // Apply column mapping to the data
+      const mappedData = {
+        masterCensus: data.masterCensus.map(record => {
+          const mappedRecord: any = {};
+          
+          // Apply the column mapping
+          Object.entries(mapping).forEach(([fieldKey, headerName]) => {
+            if (headerName && record[headerName] !== undefined) {
+              mappedRecord[fieldKey] = record[headerName];
+            }
+          });
+          
+          return mappedRecord;
+        })
+      };
+      
+      console.log('Applying column mapping:', mapping);
+      console.log('Mapped data sample:', mappedData.masterCensus[0]);
+      
+      const formatted = await formatCensusData(mappedData);
       onFormattedData(formatted);
-      setPreviewData(formatted);
+      setPreviewData({ masterCensus: formatted.masterCensus.slice(0, 10) });
     } catch (error) {
       console.error('Error formatting data:', error);
     } finally {
       setIsFormatting(false);
     }
+  };
+
+  const handleShowColumnMapper = () => {
+    setShowColumnMapper(true);
   };
 
   if (!data) {
@@ -55,10 +93,20 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
     );
   }
 
+  if (showColumnMapper) {
+    return (
+      <ColumnMapper
+        rawHeaders={rawHeaders}
+        sampleData={data.masterCensus.slice(0, 3)}
+        onMappingComplete={handleColumnMappingComplete}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Records</CardTitle>
@@ -74,21 +122,25 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
           </CardHeader>
           <CardContent>
             <Badge variant="outline">
-              {previewData ? 'Formatted' : 'Raw Data'}
+              {isFormatting ? 'Formatting...' : (Object.keys(columnMapping).length > 0 ? 'Formatted' : 'Raw Data')}
             </Badge>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Format Button */}
-      <div className="flex justify-center">
-        <Button 
-          onClick={handleFormatData} 
-          disabled={isFormatting}
-          size="lg"
-        >
-          {isFormatting ? 'Formatting...' : 'Format Data According to Requirements'}
-        </Button>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={handleShowColumnMapper} 
+              variant="outline"
+              size="sm"
+            >
+              Remap Columns
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Data Preview Table */}
