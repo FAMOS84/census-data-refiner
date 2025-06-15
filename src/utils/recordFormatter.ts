@@ -60,7 +60,7 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     
     employeeVolumeAmount: record.relationship === 'Employee' ? parseFloat(record.employeeVolumeAmount) || 0 : undefined,
     spouseVolumeAmount: record.relationship === 'Employee' ? parseFloat(record.spouseVolumeAmount) || 0 : undefined,
-    dependentVolume: record.relationship === 'Employee' ? (record.dependentVolume === 'Enroll' || record.dependentVolume === '5000' || record.dependentVolume === '10000' ? record.dependentVolume : 'W') : undefined,
+    dependentVolume: record.relationship === 'Employee' ? formatDependentVolume(record.dependentVolume) : undefined,
     
     std: record.relationship === 'Employee' ? formatRestrictedCoverageType(record.std) : undefined, // STD only EE or W
     ltd: record.relationship === 'Employee' ? formatRestrictedCoverageType(record.ltd) : undefined, // LTD only EE or W
@@ -74,4 +74,37 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     workingLocation: record.relationship === 'Employee' ? cleanText(record.workingLocation) : undefined,
     billingDivision: record.relationship === 'Employee' ? cleanText(record.billingDivision) : undefined,
   };
+};
+
+const formatDependentVolume = (volume: any): '5000' | '10000' | '0' | 'Enroll' | 'W' => {
+  if (!volume) return 'W';
+  
+  const volumeStr = volume.toString().toUpperCase().trim();
+  
+  // Handle waiver variations
+  if (volumeStr === 'WAIVE' || volumeStr === 'WAIVED' || volumeStr === 'W') {
+    return 'W';
+  }
+  
+  // Handle enrollment
+  if (volumeStr === 'ENROLL' || volumeStr === 'ENROLLED') {
+    return 'Enroll';
+  }
+  
+  // Handle specific amounts
+  if (volumeStr === '5000' || volumeStr === '5,000' || volumeStr === '$5000' || volumeStr === '$5,000') {
+    return '5000';
+  }
+  
+  if (volumeStr === '10000' || volumeStr === '10,000' || volumeStr === '$10000' || volumeStr === '$10,000') {
+    return '10000';
+  }
+  
+  // Handle zero or decline
+  if (volumeStr === '0' || volumeStr === '$0' || volumeStr === 'DECLINE' || volumeStr === 'DECLINED') {
+    return '0';
+  }
+  
+  // Default to waiver if we can't determine
+  return 'W';
 };
