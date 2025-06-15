@@ -14,7 +14,12 @@ interface FileUploadProps {
 const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
   const processFile = useCallback(async (file: File) => {
     try {
-      console.log('Processing file:', file.name);
+      console.log('=== NEW FILE UPLOAD STARTED ===');
+      console.log('Processing file:', file.name, 'Size:', file.size, 'bytes');
+      
+      // Clear any existing data first
+      console.log('Clearing previous data...');
+      
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'buffer' });
       
@@ -25,7 +30,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
       }
       
       const masterCensusData = XLSX.utils.sheet_to_json(masterCensusSheet, { header: 1 });
-      console.log('Raw sheet data:', masterCensusData);
+      console.log('Raw sheet data rows:', masterCensusData.length);
       
       if (masterCensusData.length < 2) {
         throw new Error('No data rows found in the sheet');
@@ -35,31 +40,38 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
       const headers = masterCensusData[0] as string[];
       const dataRows = masterCensusData.slice(1);
       
-      console.log('Headers:', headers);
-      console.log('Data rows count:', dataRows.length);
+      console.log('Headers found:', headers.length);
+      console.log('Data rows to process:', dataRows.length);
       
       // Convert rows to objects
-      const masterCensusRecords = dataRows.map((row: any) => {
+      const masterCensusRecords = dataRows.map((row: any, index: number) => {
         const record: any = {};
-        headers.forEach((header, index) => {
+        headers.forEach((header, headerIndex) => {
           const cleanHeader = header?.toString().trim();
           if (cleanHeader) {
-            record[cleanHeader] = row[index];
+            record[cleanHeader] = row[headerIndex];
           }
         });
         return record;
-      }).filter(record => {
+      }).filter((record, index) => {
         // Filter out empty rows
-        return Object.values(record).some(value => value && value.toString().trim());
+        const hasData = Object.values(record).some(value => value && value.toString().trim());
+        if (!hasData) {
+          console.log(`Filtering out empty row at index ${index}`);
+        }
+        return hasData;
       });
       
-      console.log('Processed records:', masterCensusRecords.length);
-      console.log('Sample record:', masterCensusRecords[0]);
+      console.log('Final processed records:', masterCensusRecords.length);
+      console.log('Sample of first record:', JSON.stringify(masterCensusRecords[0], null, 2));
       
-      // Process the data into our format
+      // Create completely new data object
       const processedData: CensusData = {
         masterCensus: masterCensusRecords
       };
+      
+      console.log('=== CALLING onDataUploaded WITH NEW DATA ===');
+      console.log('New data contains records:', processedData.masterCensus.length);
       
       onDataUploaded(processedData);
       
@@ -67,6 +79,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
         title: "File uploaded successfully",
         description: `Processed ${masterCensusRecords.length} records from ${file.name}`,
       });
+      
+      console.log('=== FILE UPLOAD COMPLETED ===');
     } catch (error) {
       console.error('Error processing file:', error);
       toast({

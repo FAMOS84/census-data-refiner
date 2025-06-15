@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,16 +13,29 @@ const CensusFormatter = () => {
   const [validationResults, setValidationResults] = useState<any>(null);
 
   const handleDataUploaded = (data: CensusData) => {
-    setUploadedData(data);
-    // Reset formatted data and validation when new data is uploaded
+    console.log('=== HANDLING NEW DATA UPLOAD ===');
+    console.log('Previous uploadedData records:', uploadedData?.masterCensus?.length || 0);
+    console.log('Previous formattedData records:', formattedData?.masterCensus?.length || 0);
+    console.log('New data records:', data.masterCensus.length);
+    
+    // Explicitly clear all previous state
     setFormattedData(null);
     setValidationResults(null);
+    
+    // Set the new uploaded data
+    setUploadedData(data);
+    
+    console.log('State cleared and new data set');
+    console.log('=== DATA UPLOAD HANDLING COMPLETE ===');
   };
 
   const handleFormattedData = (data: CensusData) => {
+    console.log('=== HANDLING FORMATTED DATA ===');
+    console.log('Formatted data records:', data.masterCensus.length);
     setFormattedData(data);
     // Reset validation when new formatted data is available
     setValidationResults(null);
+    console.log('=== FORMATTED DATA HANDLING COMPLETE ===');
   };
 
   return (
