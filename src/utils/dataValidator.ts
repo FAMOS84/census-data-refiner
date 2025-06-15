@@ -98,13 +98,32 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
         rowIndex: index
       });
     } else {
-      // Validate date format
-      const dobString = record.dateOfBirth;
-      const dobPattern = /^\d{2}\/\d{2}\/\d{4}$/;
-      if (!dobPattern.test(dobString)) {
+      // Validate date format - handle both Excel serial numbers and date strings
+      const dobValue = record.dateOfBirth;
+      let isValidDate = false;
+      
+      if (typeof dobValue === 'number') {
+        // Excel serial date number
+        if (dobValue > 0 && dobValue < 100000) {
+          isValidDate = true;
+        }
+      } else if (typeof dobValue === 'string') {
+        const dobPattern = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (dobPattern.test(dobValue)) {
+          isValidDate = true;
+        } else {
+          // Try to parse as date
+          const parsedDate = new Date(dobValue);
+          if (!isNaN(parsedDate.getTime())) {
+            isValidDate = true;
+          }
+        }
+      }
+      
+      if (!isValidDate) {
         warnings.push({
           field: 'Date of Birth',
-          message: 'Date should be in mm/dd/yyyy format',
+          message: 'Date format may need verification',
           rowIndex: index
         });
       }
@@ -119,23 +138,76 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
           message: 'SSN is required for employees',
           rowIndex: index
         });
-      } else if (!/^\d{9}$/.test(ssn.replace(/\D/g, ''))) {
-        errors.push({
-          field: 'Social Security Number',
-          message: 'SSN must be 9 digits',
+      } else {
+        // Handle both string and number SSN formats
+        const ssnString = ssn.toString().replace(/\D/g, '');
+        if (ssnString.length !== 9) {
+          errors.push({
+            field: 'Social Security Number',
+            message: 'SSN must be 9 digits',
+            rowIndex: index
+          });
+        }
+      }
+    }
+
+    // Gender validation
+    const gender = record.gender?.toString().toUpperCase();
+    if (gender && !['M', 'F', 'MALE', 'FEMALE'].includes(gender)) {
+      errors.push({
+        field: 'Gender',
+        message: 'Gender must be M, F, Male, or Female',
+        rowIndex: index
+      });
+    }
+
+    // Salary validation
+    if (record.salaryAmount) {
+      const salaryString = record.salaryAmount.toString().replace(/[$,]/g, '');
+      const salaryNumber = parseFloat(salaryString);
+      if (isNaN(salaryNumber) || salaryNumber <= 0) {
+        warnings.push({
+          field: 'Salary',
+          message: 'Salary amount should be a valid positive number',
           rowIndex: index
         });
       }
     }
 
-    // Gender validation
-    const gender = record.gender?.toUpperCase();
-    if (gender && !['M', 'F'].includes(gender)) {
-      errors.push({
-        field: 'Gender',
-        message: 'Gender must be M or F',
-        rowIndex: index
-      });
+    // Phone number validation
+    if (record.phone) {
+      const phoneString = record.phone.toString().replace(/\D/g, '');
+      if (phoneString.length !== 10) {
+        warnings.push({
+          field: 'Phone Number',
+          message: 'Phone number should be 10 digits',
+          rowIndex: index
+        });
+      }
+    }
+
+    // Email validation
+    if (record.email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(record.email.toString())) {
+        warnings.push({
+          field: 'Email Address',
+          message: 'Email format appears invalid',
+          rowIndex: index
+        });
+      }
+    }
+
+    // Zip code validation
+    if (record.zip) {
+      const zipString = record.zip.toString().replace(/\D/g, '');
+      if (zipString.length !== 5) {
+        warnings.push({
+          field: 'Zip Code',
+          message: 'Zip code should be 5 digits',
+          rowIndex: index
+        });
+      }
     }
   });
 
