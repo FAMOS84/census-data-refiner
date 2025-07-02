@@ -33,9 +33,9 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
       const headers = Object.keys(data.masterCensus[0]);
       setRawHeaders(headers);
       
-      // Show preview of first 10 records
+      // Show preview of first 5 records
       const preview = {
-        masterCensus: data.masterCensus.slice(0, 10)
+        masterCensus: data.masterCensus.slice(0, 5)
       };
       setPreviewData(preview);
       
@@ -73,7 +73,7 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
       
       const formatted = await formatCensusData(mappedData);
       onFormattedData(formatted);
-      setPreviewData({ masterCensus: formatted.masterCensus.slice(0, 10) });
+      setPreviewData({ masterCensus: formatted.masterCensus.slice(0, 5) });
     } catch (error) {
       console.error('Error formatting data:', error);
     } finally {
@@ -146,30 +146,28 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
       {/* Data Preview Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Data Preview (First 10 Records)</CardTitle>
+          <CardTitle>Data Preview (First 5 Records)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Relationship</TableHead>
-                  <TableHead>Last Name</TableHead>
-                  <TableHead>First Name</TableHead>
-                  <TableHead>Gender</TableHead>
-                  <TableHead>Date of Birth</TableHead>
-                  <TableHead>Employee Status</TableHead>
+                  {rawHeaders.map((header, index) => (
+                    <TableHead key={header} className="min-w-[120px]">
+                      {header}
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {previewData?.masterCensus.map((record: any, index: number) => (
                   <TableRow key={index}>
-                    <TableCell>{record.relationship}</TableCell>
-                    <TableCell>{record.memberLastName}</TableCell>
-                    <TableCell>{record.firstName}</TableCell>
-                    <TableCell>{record.gender}</TableCell>
-                    <TableCell>{record.dateOfBirth}</TableCell>
-                    <TableCell>{record.employeeStatus}</TableCell>
+                    {rawHeaders.map((header) => (
+                      <TableCell key={header} className="max-w-[200px] truncate">
+                        {data?.masterCensus[index]?.[header]?.toString() || ''}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
