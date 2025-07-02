@@ -143,6 +143,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
           Choose File
         </Button>
       </div>
+      
+      <div className="text-center space-y-3 mt-6">
+        <p className="text-sm text-muted-foreground">
+          Copyright (C) KFA 2025
+        </p>
+        <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3 border">
+          <p className="font-medium mb-1">Privacy & Security Notice</p>
+          <p>
+            Your census file will only be processed within your local computer. Nothing is exchanged, 
+            submitted or stored anywhere other than on your local machine. This session will clean and 
+            dump all data once the browser is closed.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
