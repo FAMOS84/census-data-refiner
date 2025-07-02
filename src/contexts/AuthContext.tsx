@@ -9,8 +9,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// You can change this PIN to whatever you prefer
-const CORRECT_PIN = '1234';
+// Get PIN from environment variable with fallback
+const CORRECT_PIN = import.meta.env.VITE_AUTH_PIN || '1234';
+
+// Log warning if using default PIN in production
+if (CORRECT_PIN === '1234' && import.meta.env.PROD) {
+  console.warn('⚠️ Warning: Using default PIN in production. Set VITE_AUTH_PIN environment variable.');
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
