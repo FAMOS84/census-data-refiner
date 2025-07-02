@@ -72,6 +72,7 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
     // Auto-map columns based on header names
     const autoMapping: Record<string, string> = {};
     const uncertainAutoMappings: Record<string, boolean> = {};
+    const usedHeaders = new Set<string>();
     
     REQUIRED_FIELDS.forEach(field => {
       let matchingHeader = null;
@@ -79,6 +80,9 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
       
       // Try exact and high confidence matches first
       matchingHeader = rawHeaders.find(header => {
+        // Skip if header is already used
+        if (usedHeaders.has(header)) return false;
+        
         const headerLower = header.toLowerCase().trim();
         const fieldLower = field.label.toLowerCase();
         
@@ -111,6 +115,9 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
         const fieldLower = field.label.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
         
         matchingHeader = rawHeaders.find(header => {
+          // Skip if header is already used
+          if (usedHeaders.has(header)) return false;
+          
           const headerLower = header.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
           
           // Check for at least 5 character overlap
@@ -143,6 +150,7 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
       
       if (matchingHeader) {
         autoMapping[field.key] = matchingHeader;
+        usedHeaders.add(matchingHeader);
         if (isUncertain) {
           uncertainAutoMappings[field.key] = true;
         }
