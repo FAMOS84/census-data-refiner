@@ -106,17 +106,17 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
         return false;
       });
       
-      // If no high confidence match, try fuzzy matching (10+ character overlap)
+      // If no high confidence match, try fuzzy matching (5+ character overlap)
       if (!matchingHeader) {
         const fieldLower = field.label.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
         
         matchingHeader = rawHeaders.find(header => {
           const headerLower = header.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
           
-          // Check for at least 10 character overlap
-          if (fieldLower.length >= 10 || headerLower.length >= 10) {
+          // Check for at least 5 character overlap
+          if (fieldLower.length >= 5 || headerLower.length >= 5) {
             const minLength = Math.min(fieldLower.length, headerLower.length);
-            if (minLength >= 10) {
+            if (minLength >= 5) {
               // Calculate overlap
               let overlap = 0;
               for (let i = 0; i < Math.min(fieldLower.length, headerLower.length); i++) {
@@ -130,7 +130,7 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
               // Check if field contains header or vice versa
               const containsMatch = fieldLower.includes(headerLower) || headerLower.includes(fieldLower);
               
-              if (overlap >= 10 || (containsMatch && minLength >= 10)) {
+              if (overlap >= 5 || (containsMatch && minLength >= 5)) {
                 isUncertain = true;
                 return true;
               }
