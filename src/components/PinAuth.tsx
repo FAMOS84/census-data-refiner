@@ -4,9 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, Clock } from 'lucide-react';
+import { Shield, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRateLimiter } from '@/hooks/useRateLimiter';
 import WelcomeVideo from '@/components/WelcomeVideo';
 
 const PinAuth = () => {
@@ -14,54 +13,26 @@ const PinAuth = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-  
-  // Rate limiting: 5 attempts per 15 minutes, 15 minute lockout
-  const rateLimiter = useRateLimiter({
-    maxAttempts: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    lockoutMs: 15 * 60 * 1000, // 15 minute lockout
-  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (pin.length !== 4) {
       setError('Please enter a 4-digit PIN');
-      return;
-    }
-
-    if (!rateLimiter.canAttempt) {
-      if (rateLimiter.isLocked) {
-        setError(`Too many failed attempts. Try again in ${rateLimiter.remainingLockTime} seconds.`);
-      } else {
-        setError(`Maximum attempts reached. Please wait before trying again.`);
-      }
       return;
     }
 
     setIsLoading(true);
     setError('');
 
-    try {
-      const result = await login(pin);
-      rateLimiter.recordAttempt(result.success);
-      
-      if (!result.success) {
-        setError(result.error || 'Invalid PIN. Please try again.');
+    // Simulate a brief loading state for better UX
+    setTimeout(() => {
+      const success = login(pin);
+      if (!success) {
+        setError('Invalid PIN. Please try again.');
         setPin('');
-        
-        if (rateLimiter.remainingAttempts <= 1) {
-          setError(`Invalid PIN. ${rateLimiter.remainingAttempts} attempt(s) remaining before lockout.`);
-        }
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Authentication failed. Please try again.');
-      setPin('');
-      rateLimiter.recordAttempt(false);
-    } finally {
       setIsLoading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -106,28 +77,10 @@ const PinAuth = () => {
               </Alert>
             )}
 
-            {rateLimiter.isLocked && (
-              <Alert variant="destructive">
-                <Clock className="h-4 w-4" />
-                <AlertDescription>
-                  Account temporarily locked. Try again in {rateLimiter.remainingLockTime} seconds.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {!rateLimiter.isLocked && rateLimiter.remainingAttempts < 5 && (
-              <Alert variant="default">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  {rateLimiter.remainingAttempts} attempt(s) remaining before temporary lockout.
-                </AlertDescription>
-              </Alert>
-            )}
-
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={pin.length !== 4 || isLoading || !rateLimiter.canAttempt}
+              disabled={pin.length !== 4 || isLoading}
             >
               {isLoading ? 'Verifying...' : 'Access System'}
             </Button>
