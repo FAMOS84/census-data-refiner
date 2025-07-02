@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ValidationResult } from '@/types/census';
 import { analyzeColumns } from '@/utils/columnAnalyzer';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ExportOptionsProps {
   formattedData: any;
@@ -145,6 +146,33 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
       console.log('Creating MASTER CENSUS sheet with', populatedHeaders.length, 'populated columns');
       const masterCensusSheet = XLSX.utils.aoa_to_sheet(masterCensusData);
       XLSX.utils.book_append_sheet(workbook, masterCensusSheet, 'MASTER CENSUS');
+
+      // Create HELLO tab with user guidance
+      const helloData = [
+        ['Thank you for using the Census Formatting Tool!'],
+        [''],
+        ['Here are some helpful tips for using this tool:'],
+        [''],
+        ['Tip 1: Simplify Your Data Upload'],
+        ['If you only have 1 dental plan and 1 vision plan,'],
+        ['you can delete the Plan Selection columns and just upload the Coverage Type columns.'],
+        ['The system will auto-assign those for you!'],
+        [''],
+        ['Tip 2: Understanding Coverage Values'],
+        ['When uploading the final census into NCAM for quotes,'],
+        ['the system prefers "W" for waivers.'],
+        ['However, in LMG (Lincoln Marketing Group),'],
+        ['those "W" values need to be updated to "Waive with Other Coverage".'],
+        [''],
+        ['Tip 3: Blank Columns'],
+        ['Any completely blank columns have been moved to the BLANKS tab'],
+        ['to keep your main census clean and organized.'],
+        [''],
+        ['We hope this tool saves you time and effort!']
+      ];
+
+      const helloSheet = XLSX.utils.aoa_to_sheet(helloData);
+      XLSX.utils.book_append_sheet(workbook, helloSheet, 'HELLO');
 
       // Create BLANKS sheet if there are blank columns
       if (columnAnalysis.blankColumns.length > 0) {

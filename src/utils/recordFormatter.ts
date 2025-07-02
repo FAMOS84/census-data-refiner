@@ -63,7 +63,7 @@ export const formatMasterCensusRecord = (record: any, allRecords: any[]): Master
     visionCoverageType: relationship === 'Employee' ? formatCoverageType(record.visionCoverageType) : undefined, // Vision allows all tiers
     
     basicLifeCoverageType: relationship === 'Employee' ? formatRestrictedCoverageType(record.basicLifeCoverageType) : undefined, // Basic Life only EE or W
-    primaryLifeBeneficiary: relationship === 'Employee' ? cleanText(record.primaryLifeBeneficiary) : undefined,
+    primaryLifeBeneficiary: relationship === 'Employee' ? formatPrimaryLifeBeneficiary(record.primaryLifeBeneficiary, record.basicLifeCoverageType) : undefined,
     dependentBasicLife: relationship === 'Employee' ? formatDependentBasicLife(record.dependentBasicLife, allRecords) : undefined,
     lifeADDClass: relationship === 'Employee' ? cleanText(record.lifeADDClass) : undefined,
     
@@ -83,6 +83,22 @@ export const formatMasterCensusRecord = (record: any, allRecords: any[]): Master
     workingLocation: relationship === 'Employee' ? cleanText(record.workingLocation) : undefined,
     billingDivision: relationship === 'Employee' ? cleanText(record.billingDivision) : undefined,
   };
+};
+
+// Format Primary Life Beneficiary - auto-fill "On File" if Basic Life elected but beneficiary blank
+const formatPrimaryLifeBeneficiary = (beneficiary: any, basicLifeCoverageType: any): string => {
+  if (beneficiary && beneficiary.toString().trim() !== '') {
+    return cleanText(beneficiary);
+  }
+  
+  // Auto-fill "On File" if Basic Life is elected but beneficiary is blank
+  if (basicLifeCoverageType && 
+      basicLifeCoverageType.toString().toLowerCase() !== 'waive' && 
+      basicLifeCoverageType.toString().toLowerCase() !== 'w') {
+    return 'On File';
+  }
+  
+  return '';
 };
 
 const formatDependentBasicLife = (value: any, allRecords: any[]): 'Enroll' | 'W' | undefined => {
