@@ -219,6 +219,13 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
               <li>Required fields (marked with red highlights) must be mapped to proceed</li>
               <li>Optional fields can be left unmapped if not available in your data</li>
             </ol>
+            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg dark:bg-orange-950 dark:border-orange-800">
+              <p className="font-medium text-orange-800 dark:text-orange-200 mb-1">🔍 About Fuzzy Matches:</p>
+              <p className="text-sm text-orange-700 dark:text-orange-300">
+                Fields marked with <span className="bg-orange-100 text-orange-800 px-1 py-0.5 rounded text-xs dark:bg-orange-900 dark:text-orange-200">Fuzzy Match ⚠️</span> were automatically mapped based on partial similarity (5+ matching characters). 
+                Please verify these mappings are correct before proceeding, as they may not be exact matches.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
