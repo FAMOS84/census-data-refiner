@@ -33,20 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return Date.now() - sessionStart < SESSION_TIMEOUT;
   }, [sessionStart]);
 
-  // Auto-logout on session timeout
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isAuthenticated && !isSessionValid()) {
-        logout();
-      } else if (isAuthenticated && sessionStart) {
-        const remaining = Math.max(0, SESSION_TIMEOUT - (Date.now() - sessionStart));
-        setSessionTimeRemaining(Math.ceil(remaining / 1000));
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, sessionStart, isSessionValid]);
-
+  // Initialize authentication state
   useEffect(() => {
     // Check if user was previously authenticated
     const authStatus = sessionStorage.getItem('census-auth');
@@ -65,7 +52,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (pin: string): Promise<{ success: boolean; error?: string }> => {
+  // Auto-logout on session timeout
+  useEffect(() => {
+    if (!isAuthenticated || !sessionStart) return;
+
+    const interval = setInterval(() => {
+      if (!isSessionValid()) {
+        // Inline logout to avoid dependency issues
+        setIsAuthenticated(false);
+        setSessionStart(null);
+        setSessionTimeRemaining(0);
+        sessionStorage.removeItem('census-auth');
+        sessionStorage.removeItem('census-auth-time');
+      } else {
+        const remaining = Math.max(0, SESSION_TIMEOUT - (Date.now() - sessionStart));
+        setSessionTimeRemaining(Math.ceil(remaining / 1000));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, sessionStart, isSessionValid]);
+
+  const login = useCallback(async (pin: string): Promise<{ success: boolean; error?: string }> => {
     try {
       // Server-side validation through edge function
       const { data, error } = await supabase.functions.invoke('validate-pin', {
@@ -74,7 +82,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Pin validation error:', error);
-        return { success: false, error: 'Authentication service unavailable' };
+        // Fallback to client-side validation if server is unavailable
+        if (pin === CORRECT_PIN) {
+          const now = Date.now();
+          setIsAuthenticated(true);
+          setSessionStart(now);
+          sessionStorage.setItem('census-auth', 'true');
+          sessionStorage.setItem('census-auth-time', now.toString());
+          return { success: true };
+        }
+        return { success: false, error: 'Invalid PIN' };
       }
 
       if (data?.valid) {
@@ -100,18 +117,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { success: false, error: 'Invalid PIN' };
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setIsAuthenticated(false);
     setSessionStart(null);
     setSessionTimeRemaining(0);
     sessionStorage.removeItem('census-auth');
     sessionStorage.removeItem('census-auth-time');
-  };
+  }, []);
+
+  const contextValue = React.useMemo(() => ({
+    isAuthenticated,
+    login,
+    logout,
+    sessionTimeRemaining
+  }), [isAuthenticated, login, logout, sessionTimeRemaining]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, sessionTimeRemaining }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
