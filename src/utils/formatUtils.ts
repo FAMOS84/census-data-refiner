@@ -10,6 +10,40 @@ export const cleanText = (text: any): string => {
     .trim();
 };
 
+export const formatRelationshipText = (relationship: any): string => {
+  if (!relationship) return '';
+  const rel = relationship.toString().toUpperCase().trim();
+  
+  // Convert abbreviations to full names
+  switch (rel) {
+    case 'EMP':
+      return 'Employee';
+    case 'SP':
+      return 'Spouse';
+    case 'CH':
+      return 'Child';
+    case 'DP':
+      return 'Domestic Partner';
+    default:
+      return cleanText(relationship);
+  }
+};
+
+export const formatGenderText = (gender: any): string => {
+  if (!gender) return '';
+  const genderStr = gender.toString().toUpperCase().trim();
+  
+  // Convert full names to abbreviations
+  if (genderStr === 'MALE') return 'M';
+  if (genderStr === 'FEMALE') return 'F';
+  
+  // Return first character if it's M or F
+  const firstChar = genderStr.charAt(0);
+  if (firstChar === 'M' || firstChar === 'F') return firstChar;
+  
+  return '';
+};
+
 export const formatName = (name: any): string => {
   if (!name) return '';
   return cleanText(name);
@@ -158,4 +192,58 @@ export const formatRestrictedCoverageType = (coverage: any): 'EE' | 'W' | undefi
   
   // Return EE for any other non-waiver value
   return 'EE';
+};
+
+export const formatOccupation = (occupation: any): string => {
+  if (!occupation) return '';
+  
+  let formatted = occupation
+    .toString()
+    .toUpperCase()
+    .replace(/[^\w\s]/g, ' ') // Remove punctuation and special characters
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
+  
+  // Common abbreviations to help stay under 25 characters
+  const abbreviations: Record<string, string> = {
+    'ASSISTANT': 'ASST',
+    'ASSOCIATE': 'ASSOC',
+    'MANAGER': 'MGR',
+    'SUPERVISOR': 'SUPV',
+    'ADMINISTRATOR': 'ADMIN',
+    'REPRESENTATIVE': 'REP',
+    'COORDINATOR': 'COORD',
+    'SPECIALIST': 'SPEC',
+    'TECHNICIAN': 'TECH',
+    'MAINTENANCE': 'MAINT',
+    'CUSTOMER': 'CUST',
+    'SERVICE': 'SVC',
+    'DIRECTOR': 'DIR',
+    'PRESIDENT': 'PRES',
+    'VICE PRESIDENT': 'VP',
+    'SECRETARY': 'SEC',
+    'TREASURER': 'TREAS',
+    'DEPARTMENT': 'DEPT',
+    'OPERATIONS': 'OPS',
+    'BUSINESS': 'BUS',
+    'DEVELOPMENT': 'DEV',
+    'INFORMATION': 'INFO',
+    'TECHNOLOGY': 'TECH',
+    'ENGINEERING': 'ENG',
+    'MANUFACTURING': 'MFG',
+    'WAREHOUSE': 'WH',
+    'EXECUTIVE': 'EXEC'
+  };
+  
+  // Apply abbreviations
+  Object.entries(abbreviations).forEach(([full, abbrev]) => {
+    formatted = formatted.replace(new RegExp(`\\b${full}\\b`, 'g'), abbrev);
+  });
+  
+  // Truncate to 25 characters if still too long
+  if (formatted.length > 25) {
+    formatted = formatted.substring(0, 25).trim();
+  }
+  
+  return formatted;
 };

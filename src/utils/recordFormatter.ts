@@ -13,12 +13,20 @@ import {
   formatPhone,
   formatCoverageType,
   formatRestrictedCoverageType,
+  formatRelationshipText,
+  formatGenderText,
+  formatOccupation,
   cleanText 
 } from './formatUtils';
 import { validateRelationship, validateGender } from './fieldValidators';
 
 export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
-  const relationship = validateRelationship(record.relationship);
+  // Format relationship and gender text, then validate them
+  const formattedRelationshipText = formatRelationshipText(record.relationship);
+  const relationship = validateRelationship(formattedRelationshipText);
+  
+  const formattedGenderText = formatGenderText(record.gender);
+  const gender = validateGender(formattedGenderText);
   
   return {
     // Employee Information
@@ -28,7 +36,7 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     memberLastName: formatName(record.memberLastName || record.lastName),
     firstName: formatName(record.firstName),
     middleInitial: formatMiddleInitial(record.middleInitial),
-    gender: validateGender(record.gender),
+    gender: gender,
     dateOfBirth: formatDate(record.dateOfBirth),
     disabled: record.disabled === 'Yes' ? 'Yes' : 'No',
     
@@ -39,41 +47,60 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     zip: formatZip(record.zip),
     phone: formatPhone(record.phone),
     email: record.email || '', // Email keeps special characters as requested
-    dateOfHire: record.relationship === 'Employee' ? formatDate(record.dateOfHire) : undefined,
+    dateOfHire: relationship === 'Employee' ? formatDate(record.dateOfHire) : undefined,
     
     // Benefits Information (Employee lines only) - with appropriate coverage formatting
-    dentalPlanElection: record.relationship === 'Employee' ? record.dentalPlanElection : undefined,
-    dentalCoverageType: record.relationship === 'Employee' ? formatCoverageType(record.dentalCoverageType) : undefined, // Dental allows all tiers
-    dhmoProviderName: record.relationship === 'Employee' ? cleanText(record.dhmoProviderName) : undefined,
-    dentalPriorCarrierName: record.relationship === 'Employee' ? cleanText(record.dentalPriorCarrierName) : undefined,
-    dentalPriorCarrierEffectiveDate: record.relationship === 'Employee' ? formatDate(record.dentalPriorCarrierEffectiveDate) : undefined,
-    dentalPriorCarrierTermDate: record.relationship === 'Employee' ? formatDate(record.dentalPriorCarrierTermDate) : undefined,
-    dentalPriorCarrierOrtho: record.relationship === 'Employee' ? (record.dentalPriorCarrierOrtho === 'Yes' ? 'Yes' : 'No') : undefined,
+    dentalPlanElection: relationship === 'Employee' ? record.dentalPlanElection : undefined,
+    dentalCoverageType: relationship === 'Employee' ? formatCoverageType(record.dentalCoverageType) : undefined, // Dental allows all tiers
+    dhmoProviderName: relationship === 'Employee' ? cleanText(record.dhmoProviderName) : undefined,
+    dentalPriorCarrierName: relationship === 'Employee' ? cleanText(record.dentalPriorCarrierName) : undefined,
+    dentalPriorCarrierEffectiveDate: relationship === 'Employee' ? formatDate(record.dentalPriorCarrierEffectiveDate) : undefined,
+    dentalPriorCarrierTermDate: relationship === 'Employee' ? formatDate(record.dentalPriorCarrierTermDate) : undefined,
+    dentalPriorCarrierOrtho: relationship === 'Employee' ? (record.dentalPriorCarrierOrtho === 'Yes' ? 'Yes' : 'No') : undefined,
     
-    visionPlanElection: record.relationship === 'Employee' ? cleanText(record.visionPlanElection) : undefined,
-    visionCoverageType: record.relationship === 'Employee' ? formatCoverageType(record.visionCoverageType) : undefined, // Vision allows all tiers
+    visionPlanElection: relationship === 'Employee' ? cleanText(record.visionPlanElection) : undefined,
+    visionCoverageType: relationship === 'Employee' ? formatCoverageType(record.visionCoverageType) : undefined, // Vision allows all tiers
     
-    basicLifeCoverageType: record.relationship === 'Employee' ? formatRestrictedCoverageType(record.basicLifeCoverageType) : undefined, // Basic Life only EE or W
-    primaryLifeBeneficiary: record.relationship === 'Employee' ? cleanText(record.primaryLifeBeneficiary) : undefined,
-    dependentBasicLife: record.relationship === 'Employee' ? (record.dependentBasicLife === 'Enroll' ? 'Enroll' : 'W') : undefined,
-    lifeADDClass: record.relationship === 'Employee' ? cleanText(record.lifeADDClass) : undefined,
+    basicLifeCoverageType: relationship === 'Employee' ? formatRestrictedCoverageType(record.basicLifeCoverageType) : undefined, // Basic Life only EE or W
+    primaryLifeBeneficiary: relationship === 'Employee' ? cleanText(record.primaryLifeBeneficiary) : undefined,
+    dependentBasicLife: relationship === 'Employee' ? formatDependentBasicLife(record.dependentBasicLife) : undefined,
+    lifeADDClass: relationship === 'Employee' ? cleanText(record.lifeADDClass) : undefined,
     
-    employeeVolumeAmount: record.relationship === 'Employee' ? parseFloat(record.employeeVolumeAmount) || 0 : undefined,
-    spouseVolumeAmount: record.relationship === 'Employee' ? parseFloat(record.spouseVolumeAmount) || 0 : undefined,
-    dependentVolume: record.relationship === 'Employee' ? formatDependentVolume(record.dependentVolume) : undefined,
+    employeeVolumeAmount: relationship === 'Employee' ? parseFloat(record.employeeVolumeAmount) || 0 : undefined,
+    spouseVolumeAmount: relationship === 'Employee' ? parseFloat(record.spouseVolumeAmount) || 0 : undefined,
+    dependentVolume: relationship === 'Employee' ? formatDependentVolume(record.dependentVolume) : undefined,
     
-    std: record.relationship === 'Employee' ? formatRestrictedCoverageType(record.std) : undefined, // STD only EE or W
-    ltd: record.relationship === 'Employee' ? formatRestrictedCoverageType(record.ltd) : undefined, // LTD only EE or W
-    stdClass: record.relationship === 'Employee' ? cleanText(record.stdClass) : undefined,
-    ltdClass: record.relationship === 'Employee' ? cleanText(record.ltdClass) : undefined,
+    std: relationship === 'Employee' ? formatRestrictedCoverageType(record.std) : undefined, // STD only EE or W
+    ltd: relationship === 'Employee' ? formatRestrictedCoverageType(record.ltd) : undefined, // LTD only EE or W
+    stdClass: relationship === 'Employee' ? cleanText(record.stdClass) : undefined,
+    ltdClass: relationship === 'Employee' ? cleanText(record.ltdClass) : undefined,
     
-    salaryType: record.relationship === 'Employee' ? record.salaryType : undefined,
-    salaryAmount: record.relationship === 'Employee' ? formatSalary(record.salaryAmount, record.salaryType, record.hoursWorked) : undefined,
-    occupation: record.relationship === 'Employee' ? cleanText(record.occupation) : undefined,
-    hoursWorked: record.relationship === 'Employee' ? parseInt(record.hoursWorked) || 40 : undefined,
-    workingLocation: record.relationship === 'Employee' ? cleanText(record.workingLocation) : undefined,
-    billingDivision: record.relationship === 'Employee' ? cleanText(record.billingDivision) : undefined,
+    salaryType: relationship === 'Employee' ? record.salaryType : undefined,
+    salaryAmount: relationship === 'Employee' ? formatSalary(record.salaryAmount, record.salaryType, record.hoursWorked) : undefined,
+    occupation: relationship === 'Employee' ? formatOccupation(record.occupation) : undefined,
+    hoursWorked: relationship === 'Employee' ? parseInt(record.hoursWorked) || 40 : undefined,
+    workingLocation: relationship === 'Employee' ? cleanText(record.workingLocation) : undefined,
+    billingDivision: relationship === 'Employee' ? cleanText(record.billingDivision) : undefined,
   };
+};
+
+const formatDependentBasicLife = (value: any): 'Enroll' | 'W' | undefined => {
+  if (!value) return undefined;
+  
+  const valueStr = value.toString().toUpperCase().trim();
+  
+  // Handle enrollment
+  if (valueStr === 'ENROLL' || valueStr === 'ENROLLED') {
+    return 'Enroll';
+  }
+  
+  // Handle waiver variations
+  if (valueStr === 'WAIVE' || valueStr === 'WAIVED' || valueStr === 'W') {
+    return 'W';
+  }
+  
+  // If there's any other value, leave it undefined (blank)
+  return undefined;
 };
 
 const formatDependentVolume = (volume: any): '5000' | '10000' | '0' | 'Enroll' | 'W' => {
@@ -172,7 +199,7 @@ const getDependentVolumeAmount = (record: any): number => {
   console.log('Checking volume fields for record:', record.firstName, record.memberLastName);
   console.log('Raw record data:', record);
   
-  // Check various fields where volume might be stored - expanded list
+  // Check specific fields that are likely to contain voluntary life amounts
   const volumeFields = [
     record.employeeVolumeAmount,
     record.spouseVolumeAmount, 
@@ -188,17 +215,22 @@ const getDependentVolumeAmount = (record: any): number => {
     record.benefitAmount
   ];
   
-  // Also check all fields that might contain numbers
+  // Only check fields that explicitly contain "life" or "volume" in their name
   Object.keys(record).forEach(key => {
-    const value = record[key];
-    if (value && typeof value !== 'object') {
-      const stringValue = value.toString().trim();
-      // If the field contains a number that looks like a life insurance amount
-      if (/^\$?[\d,]+\.?\d*$/.test(stringValue)) {
-        const numericValue = parseFloat(stringValue.replace(/[$,]/g, ''));
-        if (numericValue >= 1000 && numericValue <= 1000000) { // Reasonable life insurance range
-          console.log(`Found potential volume in field "${key}":`, numericValue);
-          volumeFields.push(value);
+    const keyLower = key.toLowerCase();
+    if ((keyLower.includes('life') || keyLower.includes('volume') || keyLower.includes('vol')) && 
+        !keyLower.includes('zip') && !keyLower.includes('postal') && !keyLower.includes('phone')) {
+      const value = record[key];
+      if (value && typeof value !== 'object') {
+        const stringValue = value.toString().trim();
+        // If the field contains a number that looks like a life insurance amount
+        if (/^\$?[\d,]+\.?\d*$/.test(stringValue)) {
+          const numericValue = parseFloat(stringValue.replace(/[$,]/g, ''));
+          // Life insurance amounts are typically in thousands, not 5-digit ZIP codes
+          if (numericValue >= 1000 && numericValue <= 1000000 && numericValue % 1000 === 0) {
+            console.log(`Found potential volume in field "${key}":`, numericValue);
+            volumeFields.push(value);
+          }
         }
       }
     }
@@ -209,7 +241,8 @@ const getDependentVolumeAmount = (record: any): number => {
       const stringValue = field.toString().replace(/[$,\s]/g, '');
       const numericValue = parseFloat(stringValue);
       console.log(`Checking field value: ${field} -> parsed: ${numericValue}`);
-      if (!isNaN(numericValue) && numericValue > 0) {
+      // Ensure we're getting reasonable life insurance amounts and not ZIP codes
+      if (!isNaN(numericValue) && numericValue >= 1000 && numericValue <= 1000000 && numericValue % 1000 === 0) {
         console.log(`Found valid volume amount: ${numericValue}`);
         return numericValue;
       }
