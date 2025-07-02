@@ -179,6 +179,14 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
         ['It will be updated live with your uploaded census from here.'],
         ['Then validate, save, and upload that final census for a more automated implementation.'],
         [''],
+        ['Tip 5: DHMO Dental Verification'],
+        ['If your group includes DHMO dental, you will need to verify each uploaded employee record'],
+        ['as there is an auto assign checkbox to select if a provider has not been selected.'],
+        [''],
+        ['Tip 6: Quality Check Best Practice'],
+        ['Spot check your enrollments, especially your voluntary life elections.'],
+        ['Compare them to your original census pre-census cleaning to ensure all is accurate.'],
+        [''],
         ['We hope this tool saves you time and effort!']
       ];
 
