@@ -14,6 +14,13 @@ const CensusFormatter = () => {
   const [validationResults, setValidationResults] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("upload");
 
+  const handleStartOver = () => {
+    setUploadedData(null);
+    setFormattedData(null);
+    setValidationResults(null);
+    setActiveTab("upload");
+  };
+
   const handleDataUploaded = (data: CensusData) => {
     console.log('=== HANDLING NEW DATA UPLOAD ===');
     console.log('Previous uploadedData records:', uploadedData?.masterCensus?.length || 0);
@@ -49,8 +56,8 @@ const CensusFormatter = () => {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upload">Upload</TabsTrigger>
           <TabsTrigger value="preview" disabled={!uploadedData}>Preview</TabsTrigger>
-          <TabsTrigger value="validate" disabled={!formattedData}>Validate</TabsTrigger>
-          <TabsTrigger value="export" disabled={!formattedData || !validationResults}>Export</TabsTrigger>
+          <TabsTrigger value="validate" disabled={!formattedData} className={formattedData && activeTab === "preview" ? "ring-2 ring-primary ring-offset-2 animate-pulse" : ""}>Validate</TabsTrigger>
+          <TabsTrigger value="export" disabled={!formattedData || !validationResults} className={validationResults && activeTab === "validate" ? "ring-2 ring-primary ring-offset-2 animate-pulse" : ""}>Export</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="mt-6">
@@ -102,6 +109,7 @@ const CensusFormatter = () => {
               <ExportOptions 
                 formattedData={formattedData}
                 validationResults={validationResults}
+                onStartOver={handleStartOver}
               />
             </CardContent>
           </Card>

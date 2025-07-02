@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Download, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ValidationResult } from '@/types/census';
@@ -12,9 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface ExportOptionsProps {
   formattedData: any;
   validationResults: ValidationResult | null;
+  onStartOver: () => void;
 }
 
-const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validationResults }) => {
+const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validationResults, onStartOver }) => {
+  const [groupName, setGroupName] = useState('');
   const exportToExcel = () => {
     console.log('Export data:', formattedData);
     
@@ -216,7 +220,9 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
       }
 
       // Export the file
-      const fileName = `formatted_census_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileName = groupName 
+        ? `${groupName.replace(/[^a-zA-Z0-9]/g, '_')}_census_${new Date().toISOString().split('T')[0]}.xlsx`
+        : `formatted_census_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(workbook, fileName);
 
       toast({
@@ -274,10 +280,29 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
           <CardTitle>Download Options</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Group Name Input */}
+          <div className="space-y-2">
+            <Label htmlFor="groupName">Group Name (optional)</Label>
+            <Input
+              id="groupName"
+              placeholder="Enter group name for filename"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              This will be used as the filename for your downloaded file
+            </p>
+          </div>
+          
           <div className="flex flex-col sm:flex-row gap-4">
             <Button onClick={exportToExcel} className="flex-1" size="lg">
               <Download className="h-4 w-4 mr-2" />
               Download Formatted Census (.xlsx)
+            </Button>
+            
+            <Button onClick={onStartOver} variant="outline" size="lg">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Start from Beginning
             </Button>
           </div>
           
