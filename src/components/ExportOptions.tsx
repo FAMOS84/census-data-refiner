@@ -6,6 +6,7 @@ import { Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
 import { ValidationResult } from '@/types/census';
+import { analyzeColumns } from '@/utils/columnAnalyzer';
 
 interface ExportOptionsProps {
   formattedData: any;
@@ -29,8 +30,11 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
       // Create a new workbook
       const workbook = XLSX.utils.book_new();
 
-      // Create MASTER CENSUS sheet
-      const headers = [
+      // Analyze columns to separate populated from blank
+      const columnAnalysis = analyzeColumns(formattedData.masterCensus);
+
+      // All available headers in order
+      const allHeaders = [
         'Relationship',
         'Employee Status',
         'Social Security Number',
@@ -75,57 +79,94 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({ formattedData, validation
         'Billing Division'
       ];
 
+      // Create mapping of display names to record properties
+      const headerToProperty: { [key: string]: string } = {
+        'Relationship': 'relationship',
+        'Employee Status': 'employeeStatus',
+        'Social Security Number': 'socialSecurityNumber',
+        'Member Last Name': 'memberLastName',
+        'First Name': 'firstName',
+        'Middle Initial': 'middleInitial',
+        'Gender': 'gender',
+        'Date of Birth': 'dateOfBirth',
+        'Disabled': 'disabled',
+        'Member Street Address': 'memberStreetAddress',
+        'City': 'city',
+        'State': 'state',
+        'Zip': 'zip',
+        'Phone': 'phone',
+        'Email': 'email',
+        'Date of Hire': 'dateOfHire',
+        'Dental Plan Election': 'dentalPlanElection',
+        'Dental Coverage Type': 'dentalCoverageType',
+        'DHMO Provider Name': 'dhmoProviderName',
+        'Dental Prior Carrier Name': 'dentalPriorCarrierName',
+        'Dental Prior Carrier Effective Date': 'dentalPriorCarrierEffectiveDate',
+        'Dental Prior Carrier Term Date': 'dentalPriorCarrierTermDate',
+        'Dental Prior Carrier Ortho': 'dentalPriorCarrierOrtho',
+        'Vision Plan Election': 'visionPlanElection',
+        'Vision Coverage Type': 'visionCoverageType',
+        'Basic Life Coverage Type': 'basicLifeCoverageType',
+        'Primary Life Beneficiary': 'primaryLifeBeneficiary',
+        'Dependent Basic Life': 'dependentBasicLife',
+        'Life ADD Class': 'lifeADDClass',
+        'Employee Volume Amount': 'employeeVolumeAmount',
+        'Spouse Volume Amount': 'spouseVolumeAmount',
+        'Dependent Volume': 'dependentVolume',
+        'STD': 'std',
+        'LTD': 'ltd',
+        'STD Class': 'stdClass',
+        'LTD Class': 'ltdClass',
+        'Salary Type': 'salaryType',
+        'Salary Amount': 'salaryAmount',
+        'Occupation': 'occupation',
+        'Hours Worked': 'hoursWorked',
+        'Working Location': 'workingLocation',
+        'Billing Division': 'billingDivision'
+      };
+
+      // Filter headers for populated columns only
+      const populatedHeaders = allHeaders.filter(header => {
+        const property = headerToProperty[header];
+        return !columnAnalysis.blankColumns.includes(property);
+      });
+
+      // Create MASTER CENSUS sheet with populated columns only
       const masterCensusData = [
-        headers,
-        ...formattedData.masterCensus.map((record: any) => [
-          record.relationship || '',
-          record.employeeStatus || '',
-          record.socialSecurityNumber || '',
-          record.memberLastName || '',
-          record.firstName || '',
-          record.middleInitial || '',
-          record.gender || '',
-          record.dateOfBirth || '',
-          record.disabled || '',
-          record.memberStreetAddress || '',
-          record.city || '',
-          record.state || '',
-          record.zip || '',
-          record.phone || '',
-          record.email || '',
-          record.dateOfHire || '',
-          record.dentalPlanElection || '',
-          record.dentalCoverageType || '',
-          record.dhmoProviderName || '',
-          record.dentalPriorCarrierName || '',
-          record.dentalPriorCarrierEffectiveDate || '',
-          record.dentalPriorCarrierTermDate || '',
-          record.dentalPriorCarrierOrtho || '',
-          record.visionPlanElection || '',
-          record.visionCoverageType || '',
-          record.basicLifeCoverageType || '',
-          record.primaryLifeBeneficiary || '',
-          record.dependentBasicLife || '',
-          record.lifeADDClass || '',
-          record.employeeVolumeAmount || '',
-          record.spouseVolumeAmount || '',
-          record.dependentVolume || '',
-          record.std || '',
-          record.ltd || '',
-          record.stdClass || '',
-          record.ltdClass || '',
-          record.salaryType || '',
-          record.salaryAmount || '',
-          record.occupation || '',
-          record.hoursWorked || '',
-          record.workingLocation || '',
-          record.billingDivision || ''
-        ])
+        populatedHeaders,
+        ...formattedData.masterCensus.map((record: any) => 
+          populatedHeaders.map(header => {
+            const property = headerToProperty[header];
+            return record[property] || '';
+          })
+        )
       ];
 
-      console.log('Creating sheet with data:', masterCensusData.length, 'rows');
+      console.log('Creating MASTER CENSUS sheet with', populatedHeaders.length, 'populated columns');
       const masterCensusSheet = XLSX.utils.aoa_to_sheet(masterCensusData);
       XLSX.utils.book_append_sheet(workbook, masterCensusSheet, 'MASTER CENSUS');
+
+      // Create BLANKS sheet if there are blank columns
+      if (columnAnalysis.blankColumns.length > 0) {
+        const blankHeaders = allHeaders.filter(header => {
+          const property = headerToProperty[header];
+          return columnAnalysis.blankColumns.includes(property);
+        });
+
+        const blanksData = [
+          blankHeaders,
+          ...formattedData.masterCensus.map((record: any) => 
+            blankHeaders.map(header => {
+              const property = headerToProperty[header];
+              return record[property] || '';
+            })
+          )
+        ];
+
+        console.log('Creating BLANKS sheet with', blankHeaders.length, 'blank columns');
+        const blanksSheet = XLSX.utils.aoa_to_sheet(blanksData);
+        XLSX.utils.book_append_sheet(workbook, blanksSheet, 'BLANKS');
+      }
 
       // Export the file
       const fileName = `formatted_census_${new Date().toISOString().split('T')[0]}.xlsx`;
