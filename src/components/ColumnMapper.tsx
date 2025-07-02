@@ -361,9 +361,6 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
                   {mapping[field.key] && autoMapped[field.key] && (
                     <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
                   )}
-                  {isUnmapped && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Optional - No mapping required</div>
-                  )}
                 </div>
                 <div>
                   <Select 
