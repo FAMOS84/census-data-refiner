@@ -66,13 +66,19 @@ const NO_MAPPING_VALUE = '__NO_MAPPING__';
 const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onMappingComplete }) => {
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [autoMapped, setAutoMapped] = useState<Record<string, string>>({});
+  const [uncertainMappings, setUncertainMappings] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     // Auto-map columns based on header names
     const autoMapping: Record<string, string> = {};
+    const uncertainAutoMappings: Record<string, boolean> = {};
     
     REQUIRED_FIELDS.forEach(field => {
-      const matchingHeader = rawHeaders.find(header => {
+      let matchingHeader = null;
+      let isUncertain = false;
+      
+      // Try exact and high confidence matches first
+      matchingHeader = rawHeaders.find(header => {
         const headerLower = header.toLowerCase().trim();
         const fieldLower = field.label.toLowerCase();
         
@@ -94,16 +100,57 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
         if (field.key === 'hoursWorked' && headerLower.includes('hours')) return true;
         if (field.key === 'employeeStatus' && headerLower.includes('employee status')) return true;
         if (field.key === 'disabled' && headerLower.includes('disabled')) return true;
+        if (field.key === 'stdClass' && headerLower.includes('std class')) return true;
+        if (field.key === 'ltdClass' && headerLower.includes('ltd class')) return true;
         
         return false;
       });
       
+      // If no high confidence match, try fuzzy matching (10+ character overlap)
+      if (!matchingHeader) {
+        const fieldLower = field.label.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+        
+        matchingHeader = rawHeaders.find(header => {
+          const headerLower = header.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
+          
+          // Check for at least 10 character overlap
+          if (fieldLower.length >= 10 || headerLower.length >= 10) {
+            const minLength = Math.min(fieldLower.length, headerLower.length);
+            if (minLength >= 10) {
+              // Calculate overlap
+              let overlap = 0;
+              for (let i = 0; i < Math.min(fieldLower.length, headerLower.length); i++) {
+                if (fieldLower[i] === headerLower[i]) {
+                  overlap++;
+                } else {
+                  break;
+                }
+              }
+              
+              // Check if field contains header or vice versa
+              const containsMatch = fieldLower.includes(headerLower) || headerLower.includes(fieldLower);
+              
+              if (overlap >= 10 || (containsMatch && minLength >= 10)) {
+                isUncertain = true;
+                return true;
+              }
+            }
+          }
+          
+          return false;
+        });
+      }
+      
       if (matchingHeader) {
         autoMapping[field.key] = matchingHeader;
+        if (isUncertain) {
+          uncertainAutoMappings[field.key] = true;
+        }
       }
     });
     
     setAutoMapped(autoMapping);
+    setUncertainMappings(uncertainAutoMappings);
     setMapping(autoMapping);
   }, [rawHeaders]);
 
@@ -306,8 +353,13 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
                     {field.label}
                     {isUnmapped && <span className="ml-1 text-red-600">*</span>}
                   </Label>
-                  {mapping[field.key] && autoMapped[field.key] && (
+                  {mapping[field.key] && autoMapped[field.key] && !uncertainMappings[field.key] && (
                     <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
+                  )}
+                  {mapping[field.key] && uncertainMappings[field.key] && (
+                    <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900 dark:text-orange-200 dark:border-orange-700">
+                      Fuzzy Match ⚠️
+                    </Badge>
                   )}
                   {isUnmapped && (
                     <div className="text-xs text-red-600 dark:text-red-400 mt-1">No Mapping - Please select a column</div>
@@ -363,8 +415,13 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
                   <Label className={`font-medium ${isUnmapped ? 'text-gray-700 dark:text-gray-300' : 'text-blue-800 dark:text-blue-200'}`}>
                     {field.label}
                   </Label>
-                  {mapping[field.key] && autoMapped[field.key] && (
+                  {mapping[field.key] && autoMapped[field.key] && !uncertainMappings[field.key] && (
                     <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
+                  )}
+                  {mapping[field.key] && uncertainMappings[field.key] && (
+                    <Badge variant="outline" className="ml-2 text-xs bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900 dark:text-orange-200 dark:border-orange-700">
+                      Fuzzy Match ⚠️
+                    </Badge>
                   )}
                 </div>
                 <div>
