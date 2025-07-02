@@ -11,8 +11,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CensusData } from '@/types/census';
 import { formatCensusData } from '@/utils/dataFormatter';
+import { analyzeColumns, ColumnAnalysis } from '@/utils/columnAnalyzer';
 import ColumnMapper from './ColumnMapper';
 
 interface DataPreviewProps {
@@ -26,12 +28,17 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
   const [showColumnMapper, setShowColumnMapper] = useState(false);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [rawHeaders, setRawHeaders] = useState<string[]>([]);
+  const [columnAnalysis, setColumnAnalysis] = useState<ColumnAnalysis | null>(null);
 
   useEffect(() => {
     if (data && data.masterCensus.length > 0) {
       // Extract headers from the first record
       const headers = Object.keys(data.masterCensus[0]);
       setRawHeaders(headers);
+      
+      // Analyze columns for blank detection
+      const analysis = analyzeColumns(data.masterCensus);
+      setColumnAnalysis(analysis);
       
       // Show preview of first 5 records
       const preview = {
@@ -143,36 +150,67 @@ const DataPreview: React.FC<DataPreviewProps> = ({ data, onFormattedData }) => {
         </Card>
       </div>
 
-      {/* Data Preview Table */}
+      {/* Data Preview with Tabs */}
       <Card>
         <CardHeader>
           <CardTitle>Data Preview (First 5 Records)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {rawHeaders.map((header, index) => (
-                    <TableHead key={header} className="min-w-[120px]">
-                      {header}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {previewData?.masterCensus.map((record: any, index: number) => (
-                  <TableRow key={index}>
-                    {rawHeaders.map((header) => (
-                      <TableCell key={header} className="max-w-[200px] truncate">
-                        {data?.masterCensus[index]?.[header]?.toString() || ''}
-                      </TableCell>
+          <Tabs defaultValue="data" className="w-full">
+            <TabsList>
+              <TabsTrigger value="data">Data ({rawHeaders.length - (columnAnalysis?.blankColumns.length || 0)} columns)</TabsTrigger>
+              {columnAnalysis && columnAnalysis.blankColumns.length > 0 && (
+                <TabsTrigger value="blanks">Blanks ({columnAnalysis.blankColumns.length} columns)</TabsTrigger>
+              )}
+            </TabsList>
+            
+            <TabsContent value="data">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      {rawHeaders.filter(header => !columnAnalysis?.blankColumns.includes(header)).map((header, index) => (
+                        <TableHead key={header} className="min-w-[120px]">
+                          {header}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {previewData?.masterCensus.map((record: any, index: number) => (
+                      <TableRow key={index}>
+                        {rawHeaders.filter(header => !columnAnalysis?.blankColumns.includes(header)).map((header) => (
+                          <TableCell key={header} className="max-w-[200px] truncate">
+                            {data?.masterCensus[index]?.[header]?.toString() || ''}
+                          </TableCell>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+            
+            {columnAnalysis && columnAnalysis.blankColumns.length > 0 && (
+              <TabsContent value="blanks">
+                <div className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    These columns were completely blank in your uploaded data:
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {columnAnalysis.blankColumns.map((header) => (
+                      <div key={header} className="p-3 border rounded-lg bg-muted/50">
+                        <div className="font-medium text-sm">{header}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          No data found
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            )}
+          </Tabs>
         </CardContent>
       </Card>
     </div>

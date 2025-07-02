@@ -19,8 +19,9 @@ import {
   cleanText 
 } from './formatUtils';
 import { validateRelationship, validateGender } from './fieldValidators';
+import { hasExistingEntries } from './columnAnalyzer';
 
-export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
+export const formatMasterCensusRecord = (record: any, allRecords: any[]): MasterCensusRecord => {
   // Format relationship and gender text, then validate them
   const formattedRelationshipText = formatRelationshipText(record.relationship);
   const relationship = validateRelationship(formattedRelationshipText);
@@ -63,7 +64,7 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
     
     basicLifeCoverageType: relationship === 'Employee' ? formatRestrictedCoverageType(record.basicLifeCoverageType) : undefined, // Basic Life only EE or W
     primaryLifeBeneficiary: relationship === 'Employee' ? cleanText(record.primaryLifeBeneficiary) : undefined,
-    dependentBasicLife: relationship === 'Employee' ? formatDependentBasicLife(record.dependentBasicLife) : undefined,
+    dependentBasicLife: relationship === 'Employee' ? formatDependentBasicLife(record.dependentBasicLife, allRecords) : undefined,
     lifeADDClass: relationship === 'Employee' ? cleanText(record.lifeADDClass) : undefined,
     
     employeeVolumeAmount: relationship === 'Employee' ? parseFloat(record.employeeVolumeAmount) || 0 : undefined,
@@ -84,8 +85,15 @@ export const formatMasterCensusRecord = (record: any): MasterCensusRecord => {
   };
 };
 
-const formatDependentBasicLife = (value: any): 'Enroll' | 'W' | undefined => {
-  if (!value) return undefined;
+const formatDependentBasicLife = (value: any, allRecords: any[]): 'Enroll' | 'W' | undefined => {
+  if (!value) {
+    // Check if there are existing entries in this column across all records
+    const hasExisting = hasExistingEntries(allRecords, 'dependentBasicLife');
+    if (hasExisting) {
+      return 'W'; // Auto-fill with Waiver only if column has some entries
+    }
+    return undefined; // Leave blank if column is completely empty
+  }
   
   const valueStr = value.toString().toUpperCase().trim();
   

@@ -55,6 +55,37 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
     const relationship = record.relationship?.toLowerCase() || '';
     if (relationship === 'employee') {
       demographicCounts.employees++;
+      
+      // STD/LTD Required Field Validation for Employees
+      const hasSTD = record.std && record.std.toLowerCase() !== 'waive' && record.std.toLowerCase() !== 'w';
+      const hasLTD = record.ltd && record.ltd.toLowerCase() !== 'waive' && record.ltd.toLowerCase() !== 'w';
+      
+      if (hasSTD || hasLTD) {
+        // When STD/LTD coverage exists, salary, occupation, and hours are required
+        if (!record.salaryAmount || record.salaryAmount === 0) {
+          errors.push({
+            field: 'Salary Amount',
+            message: 'Salary Amount is required when STD or LTD coverage is elected',
+            rowIndex: index
+          });
+        }
+        
+        if (!record.occupation || record.occupation.toString().trim() === '') {
+          errors.push({
+            field: 'Occupation',
+            message: 'Occupation is required when STD or LTD coverage is elected',
+            rowIndex: index
+          });
+        }
+        
+        if (!record.hoursWorked || record.hoursWorked === 0) {
+          errors.push({
+            field: 'Hours Worked Per Week',
+            message: 'Hours Worked Per Week is required when STD or LTD coverage is elected',
+            rowIndex: index
+          });
+        }
+      }
     } else if (relationship === 'spouse') {
       demographicCounts.spouses++;
     } else if (relationship === 'child') {
