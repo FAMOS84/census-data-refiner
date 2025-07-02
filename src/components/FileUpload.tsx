@@ -145,9 +145,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataUploaded }) => {
       </div>
       
       <div className="text-center space-y-4 mt-8">
-        <p className="text-sm text-muted-foreground">
-          Copyright (C) KFA 2025
-        </p>
         <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-4 border">
           <p className="font-medium mb-2">Privacy & Security Notice</p>
           <p className="mb-1">
