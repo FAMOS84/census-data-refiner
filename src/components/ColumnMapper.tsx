@@ -52,8 +52,13 @@ const REQUIRED_FIELDS = [
   { key: 'spouseVolumeAmount', label: 'Spousal Voluntary Life', required: false },
   { key: 'dependentVolume', label: 'Child Voluntary Life', required: false },
   { key: 'std', label: 'STD Coverage Type', required: false },
+  { key: 'stdClass', label: 'STD Class', required: false },
   { key: 'ltd', label: 'LTD Coverage Type', required: false },
+  { key: 'ltdClass', label: 'LTD Class', required: false },
   { key: 'lifeADDClass', label: 'Basic Life Class', required: false },
+  { key: 'customField1', label: 'Custom Field 1', required: false },
+  { key: 'customField2', label: 'Custom Field 2', required: false },
+  { key: 'customField3', label: 'Custom Field 3', required: false },
 ];
 
 const NO_MAPPING_VALUE = '__NO_MAPPING__';
