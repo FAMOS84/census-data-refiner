@@ -11,6 +11,7 @@ const CensusFormatter = () => {
   const [uploadedData, setUploadedData] = useState<CensusData | null>(null);
   const [formattedData, setFormattedData] = useState<CensusData | null>(null);
   const [validationResults, setValidationResults] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("upload");
 
   const handleDataUploaded = (data: CensusData) => {
     console.log('=== HANDLING NEW DATA UPLOAD ===');
@@ -24,6 +25,9 @@ const CensusFormatter = () => {
     
     // Set the new uploaded data
     setUploadedData(data);
+    
+    // Automatically switch to preview tab
+    setActiveTab("preview");
     
     console.log('State cleared and new data set');
     console.log('=== DATA UPLOAD HANDLING COMPLETE ===');
@@ -40,7 +44,7 @@ const CensusFormatter = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <Tabs defaultValue="upload" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upload">Upload</TabsTrigger>
           <TabsTrigger value="preview" disabled={!uploadedData}>Preview</TabsTrigger>
