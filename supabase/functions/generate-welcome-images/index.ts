@@ -29,18 +29,26 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-image-1',
+          model: 'dall-e-3',
           prompt: prompt,
           size: '1024x1024',
-          quality: 'high',
-          output_format: 'png',
+          quality: 'hd',
           n: 1
         }),
       });
 
+      if (!response.ok) {
+        console.error(`Failed to generate image for prompt: ${prompt}`, await response.text());
+        continue;
+      }
+
       const data = await response.json();
       if (data.data && data.data[0]) {
-        images.push(data.data[0].b64_json);
+        // Convert image URL to base64
+        const imageResponse = await fetch(data.data[0].url);
+        const arrayBuffer = await imageResponse.arrayBuffer();
+        const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        images.push(base64Image);
       }
     }
 
