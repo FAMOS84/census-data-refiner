@@ -149,18 +149,81 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
 
   return (
     <div className="space-y-6">
+      {/* Instructions Card */}
+      <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+            <Info className="h-5 w-5" />
+            Column Mapping Instructions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-yellow-800 dark:text-yellow-200">
+            <p className="font-medium">📋 Please follow these steps to map your data columns:</p>
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>Review the fields below that are highlighted as <span className="bg-red-100 text-red-800 px-2 py-1 rounded dark:bg-red-900 dark:text-red-200">"No Mapping"</span></li>
+              <li>For each unmapped field, click the dropdown menu and select the matching column header from your file</li>
+              <li>Use the sample data to help identify the correct matches</li>
+              <li>Required fields (marked with red highlights) must be mapped to proceed</li>
+              <li>Optional fields can be left unmapped if not available in your data</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Common Mappings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-4 w-4" />
+            Common Column Mappings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+            <div className="p-3 border rounded-lg bg-green-50 dark:bg-green-950">
+              <div className="font-medium text-green-800 dark:text-green-200">Names & Personal Info</div>
+              <div className="text-xs text-green-700 dark:text-green-300 mt-1">
+                • First Name → "First Name", "FirstName"<br/>
+                • Last Name → "Last Name", "Member Last Name"<br/>
+                • SSN → "Social Security Number", "SSN"
+              </div>
+            </div>
+            <div className="p-3 border rounded-lg bg-blue-50 dark:bg-blue-950">
+              <div className="font-medium text-blue-800 dark:text-blue-200">Contact Information</div>
+              <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                • Address → "Member Street Address", "Address"<br/>
+                • Email → "Email Address", "Email"<br/>
+                • Phone → "Phone Number", "Phone"
+              </div>
+            </div>
+            <div className="p-3 border rounded-lg bg-purple-50 dark:bg-purple-950">
+              <div className="font-medium text-purple-800 dark:text-purple-200">Employment & Benefits</div>
+              <div className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                • Status → "Employee Status", "Status"<br/>
+                • Salary → "Salary Amount", "Annual Salary"<br/>
+                • Hours → "Hours Worked Per Week"
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            💡 These mappings are automatically saved and will improve over time to provide better suggestions for future uploads.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Summary */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            Column Mapping
+            Column Mapping Progress
             {getRequiredMappedCount() === getRequiredFieldsCount() ? (
-              <Badge variant="outline" className="text-green-600">
+              <Badge variant="outline" className="text-green-600 border-green-600">
                 <CheckCircle className="h-3 w-3 mr-1" />
                 Ready
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-orange-600">
+              <Badge variant="outline" className="text-red-600 border-red-600">
                 <AlertCircle className="h-3 w-3 mr-1" />
                 {getRequiredFieldsCount() - getRequiredMappedCount()} required fields missing
               </Badge>
@@ -222,39 +285,55 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
           <CardTitle>Required Field Mapping</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {REQUIRED_FIELDS.filter(field => field.required).map(field => (
-            <div key={field.key} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-3 border rounded-lg">
-              <div>
-                <Label className="font-medium">{field.label}</Label>
-                {mapping[field.key] && autoMapped[field.key] && (
-                  <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
-                )}
+          {REQUIRED_FIELDS.filter(field => field.required).map(field => {
+            const isUnmapped = !mapping[field.key];
+            return (
+              <div 
+                key={field.key} 
+                className={`grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-3 border rounded-lg transition-colors ${
+                  isUnmapped 
+                    ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950' 
+                    : 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                }`}
+              >
+                <div>
+                  <Label className={`font-medium ${isUnmapped ? 'text-red-800 dark:text-red-200' : 'text-green-800 dark:text-green-200'}`}>
+                    {field.label}
+                    {isUnmapped && <span className="ml-1 text-red-600">*</span>}
+                  </Label>
+                  {mapping[field.key] && autoMapped[field.key] && (
+                    <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
+                  )}
+                  {isUnmapped && (
+                    <div className="text-xs text-red-600 dark:text-red-400 mt-1">No Mapping - Please select a column</div>
+                  )}
+                </div>
+                <div>
+                  <Select 
+                    value={mapping[field.key] || NO_MAPPING_VALUE} 
+                    onValueChange={(value) => handleMappingChange(field.key, value)}
+                  >
+                    <SelectTrigger className={`${isUnmapped ? 'border-red-300 dark:border-red-700' : 'border-green-300 dark:border-green-700'}`}>
+                      <SelectValue placeholder="Select column..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value={NO_MAPPING_VALUE} className="text-red-600">-- No mapping --</SelectItem>
+                      {getAvailableHeaders(field.key).map((header) => (
+                        <SelectItem key={header} value={header}>
+                          {`${String.fromCharCode(65 + rawHeaders.indexOf(header))}. ${header}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {mapping[field.key] && (
+                    <span>Sample: <span className="font-mono">{getSampleValue(mapping[field.key])}</span></span>
+                  )}
+                </div>
               </div>
-              <div>
-                <Select 
-                  value={mapping[field.key] || NO_MAPPING_VALUE} 
-                  onValueChange={(value) => handleMappingChange(field.key, value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select column..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
-                    {getAvailableHeaders(field.key).map((header) => (
-                      <SelectItem key={header} value={header}>
-                        {`${String.fromCharCode(65 + rawHeaders.indexOf(header))}. ${header}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {mapping[field.key] && (
-                  <span>Sample: {getSampleValue(mapping[field.key])}</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -264,39 +343,54 @@ const ColumnMapper: React.FC<ColumnMapperProps> = ({ rawHeaders, sampleData, onM
           <CardTitle>Optional Field Mapping</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {REQUIRED_FIELDS.filter(field => !field.required).map(field => (
-            <div key={field.key} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-3 border rounded-lg">
-              <div>
-                <Label className="font-medium">{field.label}</Label>
-                {mapping[field.key] && autoMapped[field.key] && (
-                  <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
-                )}
+          {REQUIRED_FIELDS.filter(field => !field.required).map(field => {
+            const isUnmapped = !mapping[field.key];
+            return (
+              <div 
+                key={field.key} 
+                className={`grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-3 border rounded-lg transition-colors ${
+                  isUnmapped 
+                    ? 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900' 
+                    : 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950'
+                }`}
+              >
+                <div>
+                  <Label className={`font-medium ${isUnmapped ? 'text-gray-700 dark:text-gray-300' : 'text-blue-800 dark:text-blue-200'}`}>
+                    {field.label}
+                  </Label>
+                  {mapping[field.key] && autoMapped[field.key] && (
+                    <Badge variant="outline" className="ml-2 text-xs">Auto-mapped</Badge>
+                  )}
+                  {isUnmapped && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Optional - No mapping required</div>
+                  )}
+                </div>
+                <div>
+                  <Select 
+                    value={mapping[field.key] || NO_MAPPING_VALUE} 
+                    onValueChange={(value) => handleMappingChange(field.key, value)}
+                  >
+                    <SelectTrigger className={`${isUnmapped ? 'border-gray-300 dark:border-gray-600' : 'border-blue-300 dark:border-blue-700'}`}>
+                      <SelectValue placeholder="Select column..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
+                      {getAvailableHeaders(field.key).map((header) => (
+                        <SelectItem key={header} value={header}>
+                          {`${String.fromCharCode(65 + rawHeaders.indexOf(header))}. ${header}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {mapping[field.key] && (
+                    <span>Sample: <span className="font-mono">{getSampleValue(mapping[field.key])}</span></span>
+                  )}
+                </div>
               </div>
-              <div>
-                <Select 
-                  value={mapping[field.key] || NO_MAPPING_VALUE} 
-                  onValueChange={(value) => handleMappingChange(field.key, value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select column..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NO_MAPPING_VALUE}>-- No mapping --</SelectItem>
-                    {getAvailableHeaders(field.key).map((header) => (
-                      <SelectItem key={header} value={header}>
-                        {`${String.fromCharCode(65 + rawHeaders.indexOf(header))}. ${header}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {mapping[field.key] && (
-                  <span>Sample: {getSampleValue(mapping[field.key])}</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
