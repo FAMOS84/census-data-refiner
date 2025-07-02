@@ -5,6 +5,7 @@ import FileUpload from './FileUpload';
 import DataPreview from './DataPreview';
 import ValidationResults from './ValidationResults';
 import ExportOptions from './ExportOptions';
+import Footer from './Footer';
 import { CensusData } from '@/types/census';
 
 const CensusFormatter = () => {
@@ -61,6 +62,7 @@ const CensusFormatter = () => {
               <FileUpload onDataUploaded={handleDataUploaded} />
             </CardContent>
           </Card>
+          <Footer />
         </TabsContent>
 
         <TabsContent value="preview" className="mt-6">
