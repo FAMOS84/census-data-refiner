@@ -50,7 +50,10 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
   };
 
   // Basic validation for each record
+  let validRecordCount = 0;
+
   data.masterCensus.forEach((record, index) => {
+    let recordHasErrors = false;
     // Count demographics
     const relationship = record.relationship?.toLowerCase() || '';
     if (relationship === 'employee') {
@@ -68,6 +71,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
             message: 'Salary Amount is required when STD or LTD coverage is elected',
             rowIndex: index
           });
+          recordHasErrors = true;
         }
         
         if (!record.occupation || record.occupation.toString().trim() === '') {
@@ -76,6 +80,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
             message: 'Occupation is required when STD or LTD coverage is elected',
             rowIndex: index
           });
+          recordHasErrors = true;
         }
         
         if (!record.hoursWorked || record.hoursWorked === 0) {
@@ -84,6 +89,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
             message: 'Hours Worked Per Week is required when STD or LTD coverage is elected',
             rowIndex: index
           });
+          recordHasErrors = true;
         }
       }
     } else if (relationship === 'spouse') {
@@ -112,6 +118,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
         message: 'Last name is required',
         rowIndex: index
       });
+      recordHasErrors = true;
     }
 
     if (!record.firstName) {
@@ -120,6 +127,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
         message: 'First name is required',
         rowIndex: index
       });
+      recordHasErrors = true;
     }
 
     if (!record.dateOfBirth) {
@@ -128,6 +136,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
         message: 'Date of birth is required',
         rowIndex: index
       });
+      recordHasErrors = true;
     } else {
       // Validate date format - handle both Excel serial numbers and date strings
       const dobValue = record.dateOfBirth;
@@ -169,6 +178,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
           message: 'SSN is required for employees',
           rowIndex: index
         });
+        recordHasErrors = true;
       } else {
         // Handle both string and number SSN formats
         const ssnString = ssn.toString().replace(/\D/g, '');
@@ -178,6 +188,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
             message: 'SSN must be 9 digits',
             rowIndex: index
           });
+          recordHasErrors = true;
         }
       }
     }
@@ -190,6 +201,7 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
         message: 'Gender must be M, F, Male, or Female',
         rowIndex: index
       });
+      recordHasErrors = true;
     }
 
     // Salary validation
@@ -240,9 +252,13 @@ export const validateCensusData = async (data: CensusData): Promise<ValidationRe
         });
       }
     }
+
+    if (!recordHasErrors) {
+      validRecordCount++;
+    }
   });
 
-  const validRecords = data.masterCensus.length - errors.length;
+  const validRecords = validRecordCount;
 
   return {
     isValid: errors.length === 0,
