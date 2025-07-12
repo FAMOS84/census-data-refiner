@@ -101,8 +101,8 @@ export const formatAddress = (address: any): string => {
   return address
     .toString()
     .toUpperCase()
-    .replace(/[^\w\s]/g, ' ') // Remove all punctuation and special characters
     .replace(/#/g, ' UNIT ')
+    .replace(/[^\w\s]/g, ' ') // Remove all punctuation and special characters
     .replace(/\bROAD\b/g, 'RD')
     .replace(/\bSTREET\b/g, 'ST')
     .replace(/\bBOULEVARD\b/g, 'BLVD')
